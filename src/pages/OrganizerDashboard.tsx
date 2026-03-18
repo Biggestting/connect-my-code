@@ -1,37 +1,35 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/hooks/use-active-profile";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Ticket, Users, DollarSign, ArrowLeft } from "lucide-react";
+import { BarChart3, Ticket, DollarSign, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function OrganizerDashboard() {
   const { user } = useAuth();
-  const { activeOrganizer } = useActiveProfile();
+  const { activeProfile, isOrganizerMode } = useActiveProfile();
   const navigate = useNavigate();
+  const organizerId = activeProfile.organizerId;
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["dashboard-stats", activeOrganizer?.id],
+    queryKey: ["dashboard-stats", organizerId],
     queryFn: async () => {
-      if (!activeOrganizer) return null;
-      const [eventsRes, purchasesRes] = await Promise.all([
-        supabase.from("events").select("id", { count: "exact" }).eq("organizer_id", activeOrganizer.id),
-        supabase.from("purchases").select("total_amount").in_(
-          "event_id",
-          (await supabase.from("events").select("id").eq("organizer_id", activeOrganizer.id)).data?.map(e => e.id) || []
-        ),
-      ]);
-      const totalRevenue = (purchasesRes.data || []).reduce((s, p) => s + Number(p.total_amount), 0);
-      return {
-        totalEvents: eventsRes.count || 0,
-        totalSales: purchasesRes.data?.length || 0,
-        totalRevenue,
-      };
+      if (!organizerId) return null;
+      const eventsRes = await supabase.from("events").select("id", { count: "exact" }).eq("organizer_id", organizerId);
+      const eventIds = (eventsRes.data || []).map(e => e.id);
+      let totalRevenue = 0;
+      let totalSales = 0;
+      if (eventIds.length > 0) {
+        const purchasesRes = await supabase.from("purchases").select("total_amount").in("event_id", eventIds);
+        totalSales = purchasesRes.data?.length || 0;
+        totalRevenue = (purchasesRes.data || []).reduce((s, p) => s + Number(p.total_amount), 0);
+      }
+      return { totalEvents: eventsRes.count || 0, totalSales, totalRevenue };
     },
-    enabled: !!activeOrganizer,
+    enabled: !!organizerId,
   });
 
   if (!user) {
@@ -46,13 +44,13 @@ export default function OrganizerDashboard() {
     );
   }
 
-  if (!activeOrganizer) {
+  if (!isOrganizerMode || !organizerId) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto" />
           <h1 className="text-xl font-bold text-foreground">No Organizer Profile</h1>
-          <p className="text-sm text-muted-foreground">Request to become an organizer to access the dashboard.</p>
+          <p className="text-sm text-muted-foreground">Switch to an organizer profile or request access.</p>
           <Button onClick={() => navigate("/request-organizer")} className="gradient-primary text-primary-foreground rounded-full">
             Request Organizer Access
           </Button>
@@ -69,7 +67,7 @@ export default function OrganizerDashboard() {
         </button>
         <div>
           <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-xs text-muted-foreground">{activeOrganizer.name}</p>
+          <p className="text-xs text-muted-foreground">{activeProfile.organizerName}</p>
         </div>
       </div>
 

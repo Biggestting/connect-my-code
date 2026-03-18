@@ -30,7 +30,7 @@ export default function SearchPage() {
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <EventSkeleton key={i} />
+              <EventCardSkeleton key={i} />
             ))}
           </div>
         ) : events && events.length > 0 ? (
