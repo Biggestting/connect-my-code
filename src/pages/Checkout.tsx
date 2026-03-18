@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEvent } from "@/hooks/use-events";
 import { useAuth } from "@/hooks/use-auth";
+import { useReferralAttribution } from "@/hooks/use-referral-attribution";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
