@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/hooks/use-active-profile";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronDown, Check, User, Building2, Loader2 } from "lucide-react";
+import { ChevronDown, Check, User, Building2, Loader2, ShieldCheck } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
