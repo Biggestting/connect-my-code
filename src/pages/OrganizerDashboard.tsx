@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/hooks/use-active-profile";
+import { usePendingPromoterCount } from "@/hooks/use-pending-promoter-count";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Ticket, DollarSign, ArrowLeft } from "lucide-react";
+import { BarChart3, Ticket, DollarSign, ArrowLeft, Megaphone } from "lucide-react";
 import { PromotersSection } from "@/components/PromotersSection";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
