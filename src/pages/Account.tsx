@@ -1,14 +1,29 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useMyOrganizerRequests } from "@/hooks/use-organizer-requests";
 import { useActiveProfile } from "@/hooks/use-active-profile";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   User, Ticket, Heart, Settings, LogOut, ChevronRight,
-  Shield, HelpCircle, FileText, Bell, Megaphone
+  Shield, HelpCircle, FileText, Bell, Megaphone, Trash2
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const menuItems = [
   { icon: User, label: "Profile", path: "/profile" },
@@ -29,6 +44,11 @@ export default function AccountPage() {
   const { isOrganizerMode } = useActiveProfile();
   const navigate = useNavigate();
   const { data: myRequests } = useMyOrganizerRequests(user?.id);
+
+  const [deleteStep, setDeleteStep] = useState<"confirm" | "reauth">("confirm");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const latestRequest = myRequests?.[0];
   const hasPendingRequest = latestRequest?.status === "pending";
@@ -54,6 +74,72 @@ export default function AccountPage() {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteStep === "confirm") {
+      setDeleteStep("reauth");
+      return;
+    }
+
+    // Re-authenticate before deletion
+    if (!deletePassword.trim()) {
+      toast.error("Please enter your password to confirm deletion.");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      // Re-authenticate to verify identity
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: deletePassword,
+      });
+
+      if (signInError) {
+        toast.error("Incorrect password. Please try again.");
+        setDeleting(false);
+        return;
+      }
+
+      // Get fresh session after re-auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expired. Please try again.");
+        setDeleting(false);
+        return;
+      }
+
+      // Call server-side deletion
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (error || (data && !data.success)) {
+        toast.error(data?.error || "Failed to delete account. Please try again.");
+        setDeleting(false);
+        return;
+      }
+
+      // Sign out locally
+      await supabase.auth.signOut();
+      toast.success("Your account has been permanently deleted.");
+      navigate("/");
+    } catch (err) {
+      console.error("Account deletion error:", err);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setDeleteStep("confirm");
+      setDeletePassword("");
+    }
+  };
+
+  const resetDeleteDialog = () => {
+    setDeleteStep("confirm");
+    setDeletePassword("");
+    setDeleting(false);
   };
 
   return (
@@ -132,6 +218,63 @@ export default function AccountPage() {
         <LogOut className="h-4 w-4 mr-2" />
         Sign Out
       </Button>
+
+      {/* Delete Account */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
+        setDeleteDialogOpen(open);
+        if (!open) resetDeleteDialog();
+      }}>
+        <AlertDialogTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 text-sm"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Account
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteStep === "confirm" ? "Delete your account?" : "Confirm your identity"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteStep === "confirm" ? (
+                "This action is permanent and cannot be undone. All your personal data will be removed, and you will lose access to your tickets, saved events, and promoter records."
+              ) : (
+                "Enter your password to permanently delete your account."
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {deleteStep === "reauth" && (
+            <div className="py-2">
+              <Input
+                type="password"
+                placeholder="Enter your password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                disabled={deleting}
+                autoFocus
+              />
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDeleteAccount();
+              }}
+              disabled={deleting || (deleteStep === "reauth" && !deletePassword.trim())}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Deleting..." : deleteStep === "confirm" ? "Continue" : "Delete Permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
