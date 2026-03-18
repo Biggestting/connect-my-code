@@ -458,6 +458,121 @@ export function useDeleteProductAddon() {
 }
 
 // ═══════════════════════════════════
+// STANDALONE JOUVERT PACKAGES
+// ═══════════════════════════════════
+
+export function useStandaloneJouvertPackages(organizerId?: string) {
+  return useQuery({
+    queryKey: ["standalone-jouvert-packages", organizerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("jouvert_packages")
+        .select("*")
+        .eq("listing_mode", "standalone")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organizerId,
+  });
+}
+
+// ═══════════════════════════════════
+// CUSTOMIZATION FIELD MUTATIONS
+// ═══════════════════════════════════
+
+export function useVersionCustomizationFields(sectionVersionId?: string) {
+  return useQuery({
+    queryKey: ["customization-fields-version", sectionVersionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("customization_fields")
+        .select("*")
+        .eq("section_version_id", sectionVersionId!)
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sectionVersionId,
+  });
+}
+
+export function useCreateCustomizationField() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      product_id?: string;
+      jouvert_package_id?: string;
+      section_version_id?: string;
+      field_label: string;
+      field_type?: string;
+      options?: string[];
+      required?: boolean;
+      sort_order?: number;
+    }) => {
+      const { data, error } = await supabase
+        .from("customization_fields")
+        .insert(params as any)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customization-fields"] });
+      queryClient.invalidateQueries({ queryKey: ["customization-fields-jouvert"] });
+      queryClient.invalidateQueries({ queryKey: ["customization-fields-version"] });
+    },
+  });
+}
+
+export function useDeleteCustomizationField() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("customization_fields").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customization-fields"] });
+      queryClient.invalidateQueries({ queryKey: ["customization-fields-jouvert"] });
+      queryClient.invalidateQueries({ queryKey: ["customization-fields-version"] });
+    },
+  });
+}
+
+// ═══════════════════════════════════
+// ADDON SIZE OPTIONS
+// ═══════════════════════════════════
+
+export function useCreateAddonSizeOption() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { addon_id: string; label: string; value: string; sort_order?: number; inventory_quantity?: number | null }) => {
+      const { data, error } = await supabase.from("addon_size_options").insert(params).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-addons"] });
+    },
+  });
+}
+
+export function useDeleteAddonSizeOption() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("addon_size_options").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product-addons"] });
+    },
+  });
+}
+
+// ═══════════════════════════════════
 // UNIFIED PURCHASE
 // ═══════════════════════════════════
 
