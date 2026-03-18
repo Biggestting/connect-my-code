@@ -18,7 +18,13 @@ export default function AuthPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/", { replace: true });
+      const returnPath = sessionStorage.getItem("promoter_invite_return");
+      if (returnPath) {
+        sessionStorage.removeItem("promoter_invite_return");
+        navigate(returnPath, { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     }
   }, [user, authLoading, navigate]);
 
