@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { signInWithApple } from "@/lib/apple-auth";
 
 const Login = () => {
   const { signInWithApple, user, loading } = useAuth();
