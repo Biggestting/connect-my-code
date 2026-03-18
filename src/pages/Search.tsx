@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useEvents } from "@/hooks/use-events";
 import { EventCard } from "@/components/EventCard";
-import { EventSkeleton } from "@/components/EventSkeleton";
+import { EventCardSkeleton } from "@/components/EventSkeleton";
 import { Input } from "@/components/ui/input";
 import { CategoryChips } from "@/components/CategoryChips";
 import { Search, SlidersHorizontal } from "lucide-react";
