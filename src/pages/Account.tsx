@@ -49,6 +49,7 @@ export default function AccountPage() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const latestRequest = myRequests?.[0];
   const hasPendingRequest = latestRequest?.status === "pending";
