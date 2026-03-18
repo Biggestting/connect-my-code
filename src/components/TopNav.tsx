@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import tifeteLogo from "@/assets/tifete-logo.png";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/hooks/use-active-profile";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
