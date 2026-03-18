@@ -326,7 +326,7 @@ export default function CreateEvent() {
     setSnapshot,
     flush,
   } = useAutosave({
-    onSave: handleAutosave,
+    onSave: handleAutosave as any,
     data: form,
     enabled: !!organizer?.id && !loading,
     debounceMs: 4000,

@@ -91,9 +91,8 @@ function AddonsManager({ jouvertPackageId, costumeProductId }: { jouvertPackageI
         description: newDescription.trim() || undefined,
         price: parseFloat(newPrice),
         max_quantity: parseInt(newMaxQty) || 100,
-        sort_order: (addons?.length || 0) + 1 as any,
         has_size_options: newHasSizes,
-      });
+      } as any);
 
       // Create size options if enabled
       if (newHasSizes && newSizeOptions.length > 0) {
