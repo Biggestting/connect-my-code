@@ -264,8 +264,8 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
               </span>
             </div>
             {pendingRequests.map((req: any) => {
-              const name = req.profiles?.display_name || req.user_id?.slice(0, 8);
-              const email = req.profiles?.email;
+              const name = req.profile?.display_name || req.user_id?.slice(0, 8);
+              const reqEmail = req.profile?.email;
               return (
                 <div
                   key={req.id}
