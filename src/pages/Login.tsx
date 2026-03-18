@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { signInWithApple } from "@/lib/apple-auth";
 
 const Login = () => {
-  const { signInWithApple, user, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [signingIn, setSigningIn] = useState(false);
 
