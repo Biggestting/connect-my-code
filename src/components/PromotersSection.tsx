@@ -248,6 +248,56 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
           )}
         </div>
 
+        {/* Pending Requests */}
+        {pendingRequests && pendingRequests.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                Pending Requests ({pendingRequests.length})
+              </span>
+            </div>
+            {pendingRequests.map((req: any) => {
+              const name = req.profiles?.display_name || req.user_id?.slice(0, 8);
+              const email = req.profiles?.email;
+              return (
+                <div
+                  key={req.id}
+                  className="flex items-center justify-between rounded-lg border border-border p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-medium text-foreground">{name}</span>
+                    {email && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Mail className="h-3 w-3" />
+                        {email}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                      onClick={() => handleRequestAction(req.id, "approve")}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRequestAction(req.id, "reject")}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {isInviting && (
           <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-border p-3">
             <div className="grid grid-cols-2 gap-3">
