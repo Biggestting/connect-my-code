@@ -8,7 +8,7 @@ export function useEvents(category?: string, search?: string, location?: string)
     queryFn: async () => {
       let query = supabase
         .from("events")
-        .select("*, organizers(*), carnivals(*), ticket_tiers(*)")
+        .select("*, organizers!inner(*), carnivals(*), ticket_tiers(*)")
         .eq("publishing_status", "published")
         .order("date", { ascending: true });
 
@@ -18,7 +18,7 @@ export function useEvents(category?: string, search?: string, location?: string)
 
       if (search) {
         query = query.or(
-          `title.ilike.%${search}%,venue.ilike.%${search}%,city.ilike.%${search}%,description.ilike.%${search}%`
+          `title.ilike.%${search}%,venue.ilike.%${search}%,city.ilike.%${search}%,description.ilike.%${search}%,organizers.name.ilike.%${search}%`
         );
       }
 
