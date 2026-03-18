@@ -8,7 +8,7 @@ export function useEvents(category?: string, search?: string, location?: string)
     queryFn: async () => {
       let query = supabase
         .from("events")
-        .select("*, organizers!inner(*), carnivals(*), ticket_tiers(*)")
+        .select("*, organizers(*), carnivals(*), ticket_tiers(*)")
         .eq("publishing_status", "published")
         .order("date", { ascending: true });
 
@@ -18,7 +18,7 @@ export function useEvents(category?: string, search?: string, location?: string)
 
       if (search) {
         query = query.or(
-          `title.ilike.%${search}%,venue.ilike.%${search}%,city.ilike.%${search}%,description.ilike.%${search}%,organizers.name.ilike.%${search}%`
+          `title.ilike.%${search}%,venue.ilike.%${search}%,city.ilike.%${search}%,description.ilike.%${search}%`
         );
       }
 
@@ -28,6 +28,36 @@ export function useEvents(category?: string, search?: string, location?: string)
 
       const { data, error } = await query;
       if (error) throw error;
+
+      // If searching, also find events by organizer name and merge
+      if (search) {
+        let orgQuery = supabase
+          .from("events")
+          .select("*, organizers!inner(*), carnivals(*), ticket_tiers(*)")
+          .eq("publishing_status", "published")
+          .ilike("organizers.name", `%${search}%`);
+
+        if (category && category !== "all") {
+          orgQuery = orgQuery.eq("category", category);
+        }
+        if (location && location !== "All Locations") {
+          orgQuery = orgQuery.ilike("city", `%${location}%`);
+        }
+
+        const { data: orgData } = await orgQuery;
+        if (orgData) {
+          const existingIds = new Set(data?.map((e) => e.id) || []);
+          const merged = [...(data || [])];
+          for (const event of orgData) {
+            if (!existingIds.has(event.id)) {
+              merged.push(event);
+            }
+          }
+          merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          return merged as EventWithRelations[];
+        }
+      }
+
       return data as EventWithRelations[];
     },
   });
