@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
+import tifeteLogo from "@/assets/tifete-logo.png";
 
 export function MobileHeader() {
   return (
