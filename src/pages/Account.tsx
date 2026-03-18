@@ -50,6 +50,13 @@ export default function AccountPage() {
   const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   const latestRequest = myRequests?.[0];
   const hasPendingRequest = latestRequest?.status === "pending";
@@ -77,8 +84,6 @@ export default function AccountPage() {
     navigate("/");
   };
 
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const startCooldown = () => {
     setCooldown(7);
     cooldownRef.current = setInterval(() => {
@@ -92,12 +97,6 @@ export default function AccountPage() {
       });
     }, 1000);
   };
-
-  useEffect(() => {
-    return () => {
-      if (cooldownRef.current) clearInterval(cooldownRef.current);
-    };
-  }, []);
 
   const handleDeleteAccount = async () => {
     if (deleteStep === "confirm") {
