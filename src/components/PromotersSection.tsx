@@ -50,28 +50,34 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
     enabled: !!organizerId,
   });
 
-  // Pending promoter requests
+  // Pending promoter requests with profile lookup
   const { data: pendingRequests } = useQuery({
     queryKey: ["promoter-requests", organizerId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: requests, error } = await supabase
         .from("promoter_requests")
-        .select("*, profiles!promoter_requests_user_id_fkey(display_name, email)")
+        .select("*")
         .eq("organizer_id", organizerId)
         .eq("status", "pending")
         .order("created_at", { ascending: false });
-      if (error) {
-        // Fallback without join if FK doesn't exist
-        const { data: fallback, error: fbErr } = await supabase
-          .from("promoter_requests")
-          .select("*")
-          .eq("organizer_id", organizerId)
-          .eq("status", "pending")
-          .order("created_at", { ascending: false });
-        if (fbErr) throw fbErr;
-        return fallback as any[];
-      }
-      return data as any[];
+      if (error) throw error;
+      if (!requests || requests.length === 0) return [];
+
+      // Look up profiles for each user
+      const userIds = requests.map((r) => r.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(
+        (profiles || []).map((p) => [p.user_id, p])
+      );
+
+      return requests.map((r) => ({
+        ...r,
+        profile: profileMap.get(r.user_id) || null,
+      }));
     },
     enabled: !!organizerId,
   });
