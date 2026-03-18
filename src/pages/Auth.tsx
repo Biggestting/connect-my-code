@@ -41,7 +41,12 @@ export default function AuthPage() {
         if (error) throw error;
       }
     } catch (err: any) {
-      toast.error(err.message || "OAuth sign-in failed");
+      const msg = err.message || "";
+      if (msg.includes("already registered") || msg.includes("already exists") || msg.includes("duplicate")) {
+        toast.error("An account with this email already exists. Sign in with your existing method, then link this provider from your Profile.");
+      } else {
+        toast.error(msg || "OAuth sign-in failed");
+      }
       setOauthLoading(false);
     }
   };

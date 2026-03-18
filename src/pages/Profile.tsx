@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, ArrowLeft } from "lucide-react";
+import ConnectedAccounts from "@/components/ConnectedAccounts";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -127,6 +128,8 @@ export default function ProfilePage() {
       <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground rounded-full">
         {saving ? "Saving..." : "Save Changes"}
       </Button>
+
+      <ConnectedAccounts />
     </div>
   );
 }
