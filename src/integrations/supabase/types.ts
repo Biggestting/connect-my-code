@@ -1304,6 +1304,8 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          invite_status: string
+          invited_email: string | null
           organizer_id: string
           promo_code: string
           user_id: string | null
@@ -1314,6 +1316,8 @@ export type Database = {
           created_at?: string
           display_name: string
           id?: string
+          invite_status?: string
+          invited_email?: string | null
           organizer_id: string
           promo_code: string
           user_id?: string | null
@@ -1324,6 +1328,8 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          invite_status?: string
+          invited_email?: string | null
           organizer_id?: string
           promo_code?: string
           user_id?: string | null
