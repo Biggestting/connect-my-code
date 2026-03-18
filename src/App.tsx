@@ -28,6 +28,7 @@ import OrganizerProfile from "./pages/OrganizerProfile";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import RequestOrganizer from "./pages/RequestOrganizer";
 import ClaimTicket from "./pages/ClaimTicket";
+import JoinPromoter from "./pages/JoinPromoter";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Accessibility from "./pages/Accessibility";
@@ -65,6 +66,7 @@ const App = () => (
                 <Route path="/dashboard" element={<OrganizerDashboard />} />
                 <Route path="/request-organizer" element={<RequestOrganizer />} />
                 <Route path="/claim-ticket" element={<ClaimTicket />} />
+                <Route path="/join/promoter/:token" element={<JoinPromoter />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/accessibility" element={<Accessibility />} />

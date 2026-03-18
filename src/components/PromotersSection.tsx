@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail } from "lucide-react";
+import { UserPlus, Trash2, Mail, Link2, Copy, Check } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 interface PromoterRow {
   id: string;
@@ -23,12 +24,17 @@ interface PromoterRow {
 }
 
 export function PromotersSection({ organizerId }: { organizerId: string }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [commission, setCommission] = useState("10");
   const [isInviting, setIsInviting] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [linkCommission, setLinkCommission] = useState("10");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: promoters, isLoading } = useQuery({
     queryKey: ["promoters", organizerId],
@@ -96,23 +102,111 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
     inviteMutation.mutate();
   };
 
+  const handleGenerateLink = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase
+        .from("promoter_invite_tokens")
+        .insert({
+          organizer_id: organizerId,
+          commission_percent: Number(linkCommission),
+          created_by: user!.id,
+        })
+        .select("token")
+        .single();
+      if (error) throw error;
+      const link = `${window.location.origin}/join/promoter/${data.token}`;
+      setGeneratedLink(link);
+      toast.success("Promoter invite link generated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate link");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!generatedLink) return;
+    await navigator.clipboard.writeText(generatedLink);
+    setLinkCopied(true);
+    toast.success("Link copied to clipboard");
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base font-semibold text-foreground">Promoters</CardTitle>
-        {!isInviting && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsInviting(true)}
-            className="gap-1.5 text-xs"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Invite
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {!isInviting && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsInviting(true)}
+              className="gap-1.5 text-xs"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Invite
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Generate Promoter Link */}
+        <div className="rounded-lg border border-border p-3 space-y-3">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Generate Promoter Link</span>
+          </div>
+          {generatedLink ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input value={generatedLink} readOnly className="h-9 text-xs font-mono flex-1" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="shrink-0 gap-1.5"
+                >
+                  {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {linkCopied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs text-muted-foreground"
+                onClick={() => { setGeneratedLink(null); setLinkCopied(false); }}
+              >
+                Generate new link
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-end gap-3">
+              <div className="space-y-1 flex-1">
+                <Label className="text-xs">Commission %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={linkCommission}
+                  onChange={(e) => setLinkCommission(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={handleGenerateLink}
+                disabled={isGenerating}
+                className="gradient-primary text-primary-foreground gap-1.5"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                {isGenerating ? "Generating..." : "Generate Link"}
+              </Button>
+            </div>
+          )}
+        </div>
+
         {isInviting && (
           <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-border p-3">
             <div className="grid grid-cols-2 gap-3">

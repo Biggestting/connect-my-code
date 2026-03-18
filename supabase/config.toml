@@ -2,3 +2,7 @@ project_id = "yqvhyqgrjevshlcnhgpz"
 
 [functions.invite-promoter]
 verify_jwt = false
+
+[functions.claim-promoter-link]
+verify_jwt = false
+

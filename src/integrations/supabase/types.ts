@@ -1297,6 +1297,60 @@ export type Database = {
           },
         ]
       }
+      promoter_invite_tokens: {
+        Row: {
+          commission_percent: number
+          created_at: string
+          created_by: string
+          event_id: string | null
+          expires_at: string
+          id: string
+          organizer_id: string
+          token: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          commission_percent?: number
+          created_at?: string
+          created_by: string
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          organizer_id: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string
+          created_by?: string
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          organizer_id?: string
+          token?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promoter_invite_tokens_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promoter_invite_tokens_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "organizers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promoters: {
         Row: {
           active: boolean
