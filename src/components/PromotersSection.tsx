@@ -276,7 +276,7 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
                     {reqEmail && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                         <Mail className="h-3 w-3" />
-                        {email}
+                        {reqEmail}
                       </p>
                     )}
                   </div>
