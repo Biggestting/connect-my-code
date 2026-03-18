@@ -1,11 +1,12 @@
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/hooks/use-auth";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { signInWithApple } from "@/lib/apple-auth";
 
 const Login = () => {
-  const { signInWithApple, user, loading } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [signingIn, setSigningIn] = useState(false);
 
@@ -18,7 +19,7 @@ const Login = () => {
   const handleAppleSignIn = async () => {
     try {
       setSigningIn(true);
-      await signInWithApple();
+      await signInWithApple(window.location.origin);
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in with Apple");
       setSigningIn(false);
