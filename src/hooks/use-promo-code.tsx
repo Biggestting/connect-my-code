@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 interface ReferralData {
   promoterId: string | null;
   promoCode: string | null;
+  referralCode: string | null;
   eventId: string | null;
 }
 
@@ -17,7 +18,7 @@ interface PromoContextType {
 
 const PromoContext = createContext<PromoContextType>({
   promoterCode: null,
-  referral: { promoterId: null, promoCode: null, eventId: null },
+  referral: { promoterId: null, promoCode: null, referralCode: null, eventId: null },
   setPromoterCode: () => {},
   setReferral: () => {},
   clearPromoCode: () => {},
@@ -28,14 +29,17 @@ const REFERRAL_STORAGE_KEY = "quara_referral";
 function loadReferral(): ReferralData {
   try {
     const raw = localStorage.getItem(REFERRAL_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { promoterId: null, promoCode: null, referralCode: null, eventId: null, ...parsed };
+    }
   } catch {}
-  return { promoterId: null, promoCode: null, eventId: null };
+  return { promoterId: null, promoCode: null, referralCode: null, eventId: null };
 }
 
 function saveReferral(data: ReferralData) {
   try {
-    if (data.promoterId || data.promoCode) {
+    if (data.promoterId || data.promoCode || data.referralCode) {
       localStorage.setItem(REFERRAL_STORAGE_KEY, JSON.stringify(data));
     } else {
       localStorage.removeItem(REFERRAL_STORAGE_KEY);
@@ -61,7 +65,7 @@ export function PromoProvider({ children }: { children: ReactNode }) {
   };
 
   const clearPromoCode = () => {
-    const cleared = { promoterId: null, promoCode: null, eventId: null };
+    const cleared: ReferralData = { promoterId: null, promoCode: null, referralCode: null, eventId: null };
     setReferralState(cleared);
     saveReferral(cleared);
   };
@@ -84,12 +88,16 @@ export function usePromoCapture() {
   useEffect(() => {
     const promoId = searchParams.get("promo");
     const promoCode = searchParams.get("p");
+    const refCode = searchParams.get("ref");
 
     if (promoId) {
       setReferral({ promoterId: promoId });
     }
     if (promoCode) {
       setPromoterCode(promoCode.toUpperCase());
+    }
+    if (refCode) {
+      setReferral({ referralCode: refCode });
     }
   }, [searchParams]);
 }
