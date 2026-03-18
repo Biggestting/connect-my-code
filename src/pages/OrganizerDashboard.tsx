@@ -15,7 +15,7 @@ export default function OrganizerDashboard() {
   const { activeProfile, isOrganizerMode } = useActiveProfile();
   const navigate = useNavigate();
   const organizerId = activeProfile.organizerId;
-
+  const { data: pendingCount } = usePendingPromoterCount(organizerId ?? undefined);
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats", organizerId],
     queryFn: async () => {
