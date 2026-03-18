@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, Ticket, DollarSign, ArrowLeft, Megaphone } from "lucide-react";
 import { PromotersSection } from "@/components/PromotersSection";
+import { PromoterLeaderboard } from "@/components/PromoterLeaderboard";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
