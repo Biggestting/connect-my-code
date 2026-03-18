@@ -203,3 +203,35 @@ export function useMyPromoterStats(userId?: string) {
     enabled: !!userId,
   });
 }
+
+export function usePromoterCommissions(organizerId?: string) {
+  return useQuery({
+    queryKey: ["promoter-commissions", organizerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("promoter_commissions")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as PromoterCommission[];
+    },
+    enabled: !!organizerId,
+  });
+}
+
+export function useBulkMarkPaid() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (commissionIds: string[]) => {
+      const { error } = await supabase
+        .from("promoter_commissions")
+        .update({ status: "paid", paid_at: new Date().toISOString() } as any)
+        .in("id", commissionIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["promoter-commissions"] });
+      queryClient.invalidateQueries({ queryKey: ["promoter-sales"] });
+    },
+  });
+}
