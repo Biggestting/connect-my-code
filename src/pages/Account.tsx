@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   User, Ticket, Heart, Settings, LogOut, ChevronRight,
-  Shield, HelpCircle, FileText, Bell
+  Shield, HelpCircle, FileText, Bell, Megaphone
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
@@ -26,7 +26,14 @@ const legalItems = [
 
 export default function AccountPage() {
   const { user, loading, signOut } = useAuth();
+  const { isOrganizerMode } = useActiveProfile();
   const navigate = useNavigate();
+  const { data: myRequests } = useMyOrganizerRequests(user?.id);
+
+  const latestRequest = myRequests?.[0];
+  const hasPendingRequest = latestRequest?.status === "pending";
+  const hasApprovedRequest = latestRequest?.status === "approved";
+  const showOrganizerCTA = !isOrganizerMode && !hasApprovedRequest;
 
   if (loading) return null;
 
@@ -63,6 +70,29 @@ export default function AccountPage() {
           <p className="text-xs text-muted-foreground">Personal account</p>
         </div>
       </div>
+
+      {/* Become an Organizer CTA */}
+      {showOrganizerCTA && (
+        <Link
+          to="/request-organizer"
+          className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Megaphone className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Become an Organizer</p>
+            <p className="text-xs text-muted-foreground">
+              {hasPendingRequest ? "Your application is under review" : "List and sell tickets for your events"}
+            </p>
+          </div>
+          {hasPendingRequest ? (
+            <Badge variant="secondary" className="text-xs">Pending</Badge>
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </Link>
+      )}
 
       {/* Menu */}
       <div className="rounded-xl bg-card border border-border overflow-hidden">
