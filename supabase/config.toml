@@ -6,3 +6,6 @@ verify_jwt = false
 [functions.claim-promoter-link]
 verify_jwt = false
 
+[functions.handle-promoter-request]
+verify_jwt = false
+
