@@ -29,9 +29,7 @@ export function TopNav() {
       <div className="container flex h-14 items-center justify-between">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl font-extrabold">
-              <span className="gradient-primary bg-clip-text text-transparent">Ti'Fete</span>
-            </span>
+            <img src={tifeteLogo} alt="Ti'Fete" className="h-8 w-auto" />
           </Link>
           <nav className="flex items-center gap-6">
             {links.map((link) => (
