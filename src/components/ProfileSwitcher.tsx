@@ -96,6 +96,26 @@ export function ProfileSwitcher() {
             </div>
             {activeProfile.type === "user" && <Check className="h-4 w-4 text-primary" />}
           </DropdownMenuItem>
+          {isAdmin && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => navigate("/admin")}
+                className="gap-2"
+              >
+                <div className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Admin Panel</p>
+                  <p className="text-xs text-muted-foreground">Platform management</p>
+                </div>
+                {location.pathname.startsWith("/admin") && (
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                )}
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Organizer Profiles</DropdownMenuLabel>
           {userOrganizers.map((membership) => (
