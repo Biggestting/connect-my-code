@@ -19,7 +19,7 @@ const Login = () => {
   const handleAppleSignIn = async () => {
     try {
       setSigningIn(true);
-      await signInWithApple();
+      await signInWithApple(window.location.origin);
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in with Apple");
       setSigningIn(false);
