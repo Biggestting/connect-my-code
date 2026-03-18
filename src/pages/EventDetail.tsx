@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StickyTicketBar } from "@/components/StickyTicketBar";
 import { OrganizerPreview } from "@/components/OrganizerPreview";
-import { RequestToPromoteButton } from "@/components/RequestToPromoteButton";
+import { EventPromoterPanel } from "@/components/EventPromoterPanel";
 import { ReviewCard } from "@/components/ReviewCard";
 import { EventCard } from "@/components/EventCard";
 import { EventFallbackImage } from "@/components/EventFallbackImage";
