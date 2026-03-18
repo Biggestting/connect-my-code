@@ -22,7 +22,7 @@ import {
   Shield, HelpCircle, FileText, Bell, Megaphone, Trash2
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 const menuItems = [
