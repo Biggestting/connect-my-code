@@ -1,5 +1,8 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useMyOrganizerRequests } from "@/hooks/use-organizer-requests";
+import { useActiveProfile } from "@/hooks/use-active-profile";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   User, Ticket, Heart, Settings, LogOut, ChevronRight,
