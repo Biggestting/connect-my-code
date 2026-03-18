@@ -29,6 +29,7 @@ import OrganizerDashboard from "./pages/OrganizerDashboard";
 import RequestOrganizer from "./pages/RequestOrganizer";
 import ClaimTicket from "./pages/ClaimTicket";
 import JoinPromoter from "./pages/JoinPromoter";
+import PromoterDashboard from "./pages/PromoterDashboard";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Accessibility from "./pages/Accessibility";
