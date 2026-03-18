@@ -133,6 +133,7 @@ export default function OrganizerDashboard() {
       ) : null}
 
       <PromotersSection organizerId={organizerId} />
+      <PromoterLeaderboard organizerId={organizerId} />
     </div>
   );
 }
