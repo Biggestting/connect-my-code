@@ -113,6 +113,8 @@ export default function OrganizerDashboard() {
           </Card>
         </div>
       ) : null}
+
+      <PromotersSection organizerId={organizerId} />
     </div>
   );
 }
