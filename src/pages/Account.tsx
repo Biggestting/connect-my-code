@@ -290,10 +290,16 @@ export default function AccountPage() {
                 e.preventDefault();
                 handleDeleteAccount();
               }}
-              disabled={deleting || (deleteStep === "reauth" && !deletePassword.trim())}
+              disabled={deleting || (deleteStep === "reauth" && (cooldown > 0 || !deletePassword.trim()))}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? "Deleting..." : deleteStep === "confirm" ? "Continue" : "Delete Permanently"}
+              {deleting
+                ? "Deleting..."
+                : deleteStep === "confirm"
+                ? "Continue"
+                : cooldown > 0
+                ? `Wait ${cooldown}s`
+                : "Delete Permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
