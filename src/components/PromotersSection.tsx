@@ -183,7 +183,14 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base font-semibold text-foreground">Promoters</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle className="text-base font-semibold text-foreground">Promoters</CardTitle>
+          {pendingRequests && pendingRequests.length > 0 && (
+            <span className="min-w-[20px] h-5 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold flex items-center justify-center px-1.5">
+              {pendingRequests.length}
+            </span>
+          )}
+        </div>
         <div className="flex gap-2">
           {!isInviting && (
             <Button
