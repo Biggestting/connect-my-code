@@ -536,6 +536,45 @@ export type Database = {
           },
         ]
       }
+      event_promoters: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          promoter_id: string
+          referral_code: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          promoter_id: string
+          referral_code: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          promoter_id?: string
+          referral_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_promoters_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_promoters_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "promoters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           address: string | null
@@ -1551,6 +1590,7 @@ export type Database = {
           purchase_ip: string | null
           quantity: number
           redeemed: boolean
+          referral_code: string | null
           selected_size: string | null
           status: string
           terms_accepted: boolean
@@ -1578,6 +1618,7 @@ export type Database = {
           purchase_ip?: string | null
           quantity?: number
           redeemed?: boolean
+          referral_code?: string | null
           selected_size?: string | null
           status?: string
           terms_accepted?: boolean
@@ -1605,6 +1646,7 @@ export type Database = {
           purchase_ip?: string | null
           quantity?: number
           redeemed?: boolean
+          referral_code?: string | null
           selected_size?: string | null
           status?: string
           terms_accepted?: boolean
@@ -1988,6 +2030,7 @@ export type Database = {
         Args: { _token: string; _user_id: string }
         Returns: boolean
       }
+      generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
