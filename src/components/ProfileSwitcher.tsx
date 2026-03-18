@@ -13,6 +13,7 @@ import {
 export function ProfileSwitcher() {
   const { user } = useAuth();
   const { activeProfile, switchToUser, switchToOrganizer, userOrganizers, isLoadingOrganizers } = useActiveProfile();
+  const { data: isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const [switching, setSwitching] = useState<{ to: string; label: string } | null>(null);
