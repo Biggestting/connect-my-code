@@ -96,6 +96,8 @@ export default function Checkout() {
       toast.error("Select at least one ticket");
       return;
     }
+    // Attribution data ready for payment processing
+    console.log("Checkout with attribution:", { promoterId, referralCode, commissionRate });
     toast.success("Checkout flow coming soon!");
   };
 
