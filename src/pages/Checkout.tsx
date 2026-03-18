@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEvent } from "@/hooks/use-events";
 import { useAuth } from "@/hooks/use-auth";
+import { useReferralAttribution } from "@/hooks/use-referral-attribution";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { data: event, isLoading } = useEvent(id || "");
   const { user } = useAuth();
+  const { promoterId, referralCode, commissionRate } = useReferralAttribution(id);
   const [cart, setCart] = useState<Map<string, CartItem>>(new Map());
 
   if (!user) {
@@ -94,6 +96,8 @@ export default function Checkout() {
       toast.error("Select at least one ticket");
       return;
     }
+    // Attribution data ready for payment processing
+    console.log("Checkout with attribution:", { promoterId, referralCode, commissionRate });
     toast.success("Checkout flow coming soon!");
   };
 
