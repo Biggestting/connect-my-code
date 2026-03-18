@@ -22,7 +22,7 @@ import {
   Shield, HelpCircle, FileText, Bell, Megaphone, Trash2
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 const menuItems = [
@@ -49,6 +49,14 @@ export default function AccountPage() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   const latestRequest = myRequests?.[0];
   const hasPendingRequest = latestRequest?.status === "pending";
@@ -76,9 +84,24 @@ export default function AccountPage() {
     navigate("/");
   };
 
+  const startCooldown = () => {
+    setCooldown(7);
+    cooldownRef.current = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleDeleteAccount = async () => {
     if (deleteStep === "confirm") {
       setDeleteStep("reauth");
+      startCooldown();
       return;
     }
 
@@ -267,10 +290,16 @@ export default function AccountPage() {
                 e.preventDefault();
                 handleDeleteAccount();
               }}
-              disabled={deleting || (deleteStep === "reauth" && !deletePassword.trim())}
+              disabled={deleting || (deleteStep === "reauth" && (cooldown > 0 || !deletePassword.trim()))}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? "Deleting..." : deleteStep === "confirm" ? "Continue" : "Delete Permanently"}
+              {deleting
+                ? "Deleting..."
+                : deleteStep === "confirm"
+                ? "Continue"
+                : cooldown > 0
+                ? `Wait ${cooldown}s`
+                : "Delete Permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
