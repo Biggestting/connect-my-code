@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/hooks/use-active-profile";
+import { usePendingPromoterCount } from "@/hooks/use-pending-promoter-count";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Ticket, DollarSign, ArrowLeft } from "lucide-react";
+import { BarChart3, Ticket, DollarSign, ArrowLeft, Megaphone } from "lucide-react";
 import { PromotersSection } from "@/components/PromotersSection";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +15,7 @@ export default function OrganizerDashboard() {
   const { activeProfile, isOrganizerMode } = useActiveProfile();
   const navigate = useNavigate();
   const organizerId = activeProfile.organizerId;
-
+  const { data: pendingCount } = usePendingPromoterCount(organizerId ?? undefined);
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats", organizerId],
     queryFn: async () => {
@@ -73,11 +74,11 @@ export default function OrganizerDashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
       ) : stats ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -100,7 +101,7 @@ export default function OrganizerDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="col-span-2 md:col-span-1">
+          <Card className="col-span-1">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                 <DollarSign className="h-5 w-5 text-accent" />
@@ -108,6 +109,22 @@ export default function OrganizerDashboard() {
               <div>
                 <p className="text-2xl font-bold text-foreground">${stats.totalRevenue.toFixed(0)}</p>
                 <p className="text-xs text-muted-foreground">Revenue</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className={pendingCount && pendingCount > 0 ? "border-primary/40 bg-primary/5" : ""}>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="relative w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Megaphone className="h-5 w-5 text-primary" />
+                {!!pendingCount && pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                    {pendingCount}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{pendingCount ?? 0}</p>
+                <p className="text-xs text-muted-foreground">Requests</p>
               </div>
             </CardContent>
           </Card>
