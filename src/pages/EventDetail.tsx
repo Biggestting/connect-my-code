@@ -150,7 +150,12 @@ export default function EventDetail() {
         </div>
 
         {/* Organizer */}
-        {event.organizers && <OrganizerPreview organizer={event.organizers} />}
+        {event.organizers && (
+          <div className="space-y-2">
+            <OrganizerPreview organizer={event.organizers} />
+            <RequestToPromoteButton eventId={event.id} organizerId={event.organizer_id} />
+          </div>
+        )}
 
         {/* Description */}
         {event.description && (
