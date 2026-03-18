@@ -44,7 +44,7 @@ export function ProfileSwitcher() {
 
   if (!user) return null;
   if (isLoadingOrganizers) return null;
-  if (!userOrganizers || userOrganizers.length === 0) return null;
+  if (!userOrganizers?.length && !isAdmin) return null;
 
   return (
     <>
