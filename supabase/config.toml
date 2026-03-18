@@ -1,5 +1,8 @@
 project_id = "yqvhyqgrjevshlcnhgpz"
 
+[functions.delete-account]
+verify_jwt = false
+
 [functions.invite-promoter]
 verify_jwt = false
 
