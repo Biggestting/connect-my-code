@@ -23,6 +23,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { data: event, isLoading } = useEvent(id || "");
   const { user } = useAuth();
+  const { promoterId, referralCode, commissionRate } = useReferralAttribution(id);
   const [cart, setCart] = useState<Map<string, CartItem>>(new Map());
 
   if (!user) {
