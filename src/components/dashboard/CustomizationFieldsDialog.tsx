@@ -134,7 +134,7 @@ function FieldsManager({ productId, jouvertPackageId, sectionVersionId }: { prod
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 shrink-0"
-                onClick={() => handleDelete(field)}
+                onClick={() => handleDelete(field as any)}
                 disabled={deleteMutation.isPending}
               >
                 <Trash2 className="w-3 h-3 text-destructive" />

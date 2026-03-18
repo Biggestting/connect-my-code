@@ -285,7 +285,7 @@ function PayoutsView({ promoters, organizerId, pendingCommission, paidCommission
                     <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
-                        bulkMarkPaid.mutate({ promoterId: p.id, organizerId });
+                        bulkMarkPaid.mutate([p.id] as any);
                         toast.success(`Marked ${p.display_name}'s commissions as paid`);
                       }}
                       className="rounded-full"
