@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail, Link2, Copy, Check } from "lucide-react";
+import { UserPlus, Trash2, Mail, Link2, Copy, Check, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 interface PromoterRow {
@@ -49,6 +49,53 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
     },
     enabled: !!organizerId,
   });
+
+  // Pending promoter requests with profile lookup
+  const { data: pendingRequests } = useQuery({
+    queryKey: ["promoter-requests", organizerId],
+    queryFn: async () => {
+      const { data: requests, error } = await supabase
+        .from("promoter_requests")
+        .select("*")
+        .eq("organizer_id", organizerId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (!requests || requests.length === 0) return [];
+
+      // Look up profiles for each user
+      const userIds = requests.map((r) => r.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, email")
+        .in("user_id", userIds);
+
+      const profileMap = new Map(
+        (profiles || []).map((p) => [p.user_id, p])
+      );
+
+      return requests.map((r) => ({
+        ...r,
+        profile: profileMap.get(r.user_id) || null,
+      }));
+    },
+    enabled: !!organizerId,
+  });
+
+  const handleRequestAction = async (requestId: string, action: "approve" | "reject") => {
+    try {
+      const res = await supabase.functions.invoke("handle-promoter-request", {
+        body: { request_id: requestId, action, commission_percent: 10 },
+      });
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ["promoter-requests", organizerId] });
+      queryClient.invalidateQueries({ queryKey: ["promoters", organizerId] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
 
   const inviteMutation = useMutation({
     mutationFn: async () => {
@@ -206,6 +253,56 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
             </div>
           )}
         </div>
+
+        {/* Pending Requests */}
+        {pendingRequests && pendingRequests.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">
+                Pending Requests ({pendingRequests.length})
+              </span>
+            </div>
+            {pendingRequests.map((req: any) => {
+              const name = req.profile?.display_name || req.user_id?.slice(0, 8);
+              const reqEmail = req.profile?.email;
+              return (
+                <div
+                  key={req.id}
+                  className="flex items-center justify-between rounded-lg border border-border p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-medium text-foreground">{name}</span>
+                    {reqEmail && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Mail className="h-3 w-3" />
+                        {reqEmail}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                      onClick={() => handleRequestAction(req.id, "approve")}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRequestAction(req.id, "reject")}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {isInviting && (
           <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-border p-3">
