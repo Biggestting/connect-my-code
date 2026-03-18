@@ -2031,6 +2031,13 @@ export type Database = {
         Returns: boolean
       }
       generate_referral_code: { Args: never; Returns: string }
+      get_own_stripe_info: {
+        Args: { _organizer_id: string }
+        Returns: {
+          stripe_account_id: string
+          stripe_onboarding_complete: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
