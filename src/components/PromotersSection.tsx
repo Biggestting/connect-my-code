@@ -24,12 +24,17 @@ interface PromoterRow {
 }
 
 export function PromotersSection({ organizerId }: { organizerId: string }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [commission, setCommission] = useState("10");
   const [isInviting, setIsInviting] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [linkCommission, setLinkCommission] = useState("10");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: promoters, isLoading } = useQuery({
     queryKey: ["promoters", organizerId],
