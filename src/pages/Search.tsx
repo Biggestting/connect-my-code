@@ -23,7 +23,7 @@ export default function SearchPage() {
             className="pl-10 rounded-full bg-muted border-0"
           />
         </div>
-        <CategoryChips selected={category} onSelect={setCategory} />
+        <CategoryChips selected={category} onChange={setCategory} />
       </div>
 
       <div className="p-4">
