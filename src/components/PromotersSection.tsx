@@ -152,6 +152,61 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Generate Promoter Link */}
+        <div className="rounded-lg border border-border p-3 space-y-3">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Generate Promoter Link</span>
+          </div>
+          {generatedLink ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input value={generatedLink} readOnly className="h-9 text-xs font-mono flex-1" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="shrink-0 gap-1.5"
+                >
+                  {linkCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {linkCopied ? "Copied" : "Copy"}
+                </Button>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs text-muted-foreground"
+                onClick={() => { setGeneratedLink(null); setLinkCopied(false); }}
+              >
+                Generate new link
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-end gap-3">
+              <div className="space-y-1 flex-1">
+                <Label className="text-xs">Commission %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={linkCommission}
+                  onChange={(e) => setLinkCommission(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={handleGenerateLink}
+                disabled={isGenerating}
+                className="gradient-primary text-primary-foreground gap-1.5"
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                {isGenerating ? "Generating..." : "Generate Link"}
+              </Button>
+            </div>
+          )}
+        </div>
+
         {isInviting && (
           <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-border p-3">
             <div className="grid grid-cols-2 gap-3">
