@@ -273,7 +273,7 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-sm font-medium text-foreground">{name}</span>
-                    {email && (
+                    {reqEmail && (
                       <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                         <Mail className="h-3 w-3" />
                         {email}
