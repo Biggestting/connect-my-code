@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail, Link2, Copy, Check } from "lucide-react";
+import { UserPlus, Trash2, Mail, Link2, Copy, Check, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 interface PromoterRow {
