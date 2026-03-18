@@ -50,6 +50,47 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
     enabled: !!organizerId,
   });
 
+  // Pending promoter requests
+  const { data: pendingRequests } = useQuery({
+    queryKey: ["promoter-requests", organizerId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("promoter_requests")
+        .select("*, profiles!promoter_requests_user_id_fkey(display_name, email)")
+        .eq("organizer_id", organizerId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) {
+        // Fallback without join if FK doesn't exist
+        const { data: fallback, error: fbErr } = await supabase
+          .from("promoter_requests")
+          .select("*")
+          .eq("organizer_id", organizerId)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false });
+        if (fbErr) throw fbErr;
+        return fallback as any[];
+      }
+      return data as any[];
+    },
+    enabled: !!organizerId,
+  });
+
+  const handleRequestAction = async (requestId: string, action: "approve" | "reject") => {
+    try {
+      const res = await supabase.functions.invoke("handle-promoter-request", {
+        body: { request_id: requestId, action, commission_percent: 10 },
+      });
+      if (res.error) throw new Error(res.error.message);
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success(res.data.message);
+      queryClient.invalidateQueries({ queryKey: ["promoter-requests", organizerId] });
+      queryClient.invalidateQueries({ queryKey: ["promoters", organizerId] });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   const inviteMutation = useMutation({
     mutationFn: async () => {
       const { data: sessionData } = await supabase.auth.getSession();
