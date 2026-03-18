@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveProfile } from "@/hooks/use-active-profile";
+import { useIsAdmin } from "@/hooks/use-admin";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronDown, Check, User, Building2, Loader2 } from "lucide-react";
+import { ChevronDown, Check, User, Building2, Loader2, ShieldCheck } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
@@ -12,6 +13,7 @@ import {
 export function ProfileSwitcher() {
   const { user } = useAuth();
   const { activeProfile, switchToUser, switchToOrganizer, userOrganizers, isLoadingOrganizers } = useActiveProfile();
+  const { data: isAdmin } = useIsAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const [switching, setSwitching] = useState<{ to: string; label: string } | null>(null);
@@ -42,7 +44,7 @@ export function ProfileSwitcher() {
 
   if (!user) return null;
   if (isLoadingOrganizers) return null;
-  if (!userOrganizers || userOrganizers.length === 0) return null;
+  if (!userOrganizers?.length && !isAdmin) return null;
 
   return (
     <>
@@ -94,6 +96,26 @@ export function ProfileSwitcher() {
             </div>
             {activeProfile.type === "user" && <Check className="h-4 w-4 text-primary" />}
           </DropdownMenuItem>
+          {isAdmin && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => navigate("/admin")}
+                className="gap-2"
+              >
+                <div className="w-7 h-7 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <ShieldCheck className="h-4 w-4 text-destructive" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Admin Panel</p>
+                  <p className="text-xs text-muted-foreground">Platform management</p>
+                </div>
+                {location.pathname.startsWith("/admin") && (
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                )}
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuLabel>Organizer Profiles</DropdownMenuLabel>
           {userOrganizers.map((membership) => (
