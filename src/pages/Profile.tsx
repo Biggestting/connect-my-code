@@ -128,6 +128,8 @@ export default function ProfilePage() {
       <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground rounded-full">
         {saving ? "Saving..." : "Save Changes"}
       </Button>
+
+      <ConnectedAccounts />
     </div>
   );
 }
