@@ -102,21 +102,54 @@ export function PromotersSection({ organizerId }: { organizerId: string }) {
     inviteMutation.mutate();
   };
 
+  const handleGenerateLink = async () => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase
+        .from("promoter_invite_tokens")
+        .insert({
+          organizer_id: organizerId,
+          commission_percent: Number(linkCommission),
+          created_by: user!.id,
+        })
+        .select("token")
+        .single();
+      if (error) throw error;
+      const link = `${window.location.origin}/join/promoter/${data.token}`;
+      setGeneratedLink(link);
+      toast.success("Promoter invite link generated!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate link");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!generatedLink) return;
+    await navigator.clipboard.writeText(generatedLink);
+    setLinkCopied(true);
+    toast.success("Link copied to clipboard");
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="text-base font-semibold text-foreground">Promoters</CardTitle>
-        {!isInviting && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsInviting(true)}
-            className="gap-1.5 text-xs"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Invite
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {!isInviting && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsInviting(true)}
+              className="gap-1.5 text-xs"
+            >
+              <UserPlus className="h-3.5 w-3.5" />
+              Invite
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {isInviting && (
