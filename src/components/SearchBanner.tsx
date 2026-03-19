@@ -91,7 +91,7 @@ export function SearchBanner({
               </span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                <LocationSelector value={selectedCity} onChange={onCityChange} variant="inline" />
+                <LocationSelector value={selectedCity} onChange={onCityChange} />
               </div>
             </div>
 
