@@ -1880,6 +1880,9 @@ export type Database = {
           enforce_limit: boolean
           event_id: string
           id: string
+          limit_window_end: string | null
+          limit_window_max: number | null
+          limit_window_start: string | null
           max_per_user: number
           name: string
           price: number
@@ -1891,6 +1894,9 @@ export type Database = {
           enforce_limit?: boolean
           event_id: string
           id?: string
+          limit_window_end?: string | null
+          limit_window_max?: number | null
+          limit_window_start?: string | null
           max_per_user?: number
           name: string
           price: number
@@ -1902,6 +1908,9 @@ export type Database = {
           enforce_limit?: boolean
           event_id?: string
           id?: string
+          limit_window_end?: string | null
+          limit_window_max?: number | null
+          limit_window_start?: string | null
           max_per_user?: number
           name?: string
           price?: number
