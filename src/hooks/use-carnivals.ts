@@ -83,7 +83,7 @@ export function useCarnivalJouvertPackages(carnivalId?: string, year?: number) {
         .eq("carnival_id", carnivalId!)
         .order("created_at", { ascending: true });
 
-      if (year) query = query.eq("carnival_year", year);
+      if (year) query = query.or(`carnival_year.eq.${year},carnival_year.is.null`);
 
       const { data, error } = await query;
       if (error) throw error;
