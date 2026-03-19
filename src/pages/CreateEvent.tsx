@@ -115,7 +115,7 @@ export default function CreateEvent() {
   const [form, setForm] = useState<EventFormState>(INITIAL_FORM);
 
   // Ticket tiers state (for edit mode)
-  const [ticketTiers, setTicketTiers] = useState<{ id?: string; name: string; price: string; quantity: string }[]>([]);
+  const [ticketTiers, setTicketTiers] = useState<{ id?: string; name: string; price: string; quantity: string; enforce_limit: boolean; max_per_user: string }[]>([]);
   const [tiersLoaded, setTiersLoaded] = useState(false);
 
   // Draft recovery state
