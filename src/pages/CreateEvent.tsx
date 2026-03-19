@@ -985,7 +985,7 @@ export default function CreateEvent() {
               variant="outline"
               size="sm"
               className="rounded-full gap-1 h-7 text-xs"
-              onClick={() => setTicketTiers((prev) => [...prev, { name: "", price: "0", quantity: "100" }])}
+              onClick={() => setTicketTiers((prev) => [...prev, { name: "", price: "0", quantity: "100", enforce_limit: false, max_per_user: "4" }])}
             >
               <Plus className="w-3 h-3" /> Add Tier
             </Button>
