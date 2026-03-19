@@ -54,6 +54,8 @@ interface EventFormState {
   hasAgenda: boolean;
   carnivalId: string;
   carnivalYear: string;
+  enforceTicketLimit: boolean;
+  maxTicketsPerUser: string;
 }
 
 const INITIAL_FORM: EventFormState = {
