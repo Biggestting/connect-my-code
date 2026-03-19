@@ -542,6 +542,7 @@ export default function CreateEvent() {
           }
         }
       }
+      const statusMsg = isEditMode
         ? "Event updated!"
         : publishingStatus === "draft"
         ? "Event saved as draft!"
