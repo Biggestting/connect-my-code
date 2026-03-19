@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Search, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import { LocationSelector, getStoredLocation } from "@/components/LocationSelector";
+import { getStoredLocation } from "@/components/LocationSelector";
+import { SearchBanner } from "@/components/SearchBanner";
 import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, isThisWeek, addDays, isBefore } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
