@@ -485,6 +485,8 @@ export default function CreateEvent() {
               name: tier.name,
               price: parseFloat(tier.price) || 0,
               quantity: parseInt(tier.quantity) || 0,
+              enforce_limit: tier.enforce_limit,
+              max_per_user: parseInt(tier.max_per_user) || 4,
             } as any).eq("id", tier.id);
           } else {
             // Insert new tier
@@ -493,6 +495,8 @@ export default function CreateEvent() {
               name: tier.name,
               price: parseFloat(tier.price) || 0,
               quantity: parseInt(tier.quantity) || 0,
+              enforce_limit: tier.enforce_limit,
+              max_per_user: parseInt(tier.max_per_user) || 4,
             } as any);
           }
         }
