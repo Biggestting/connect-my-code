@@ -206,6 +206,9 @@ export default function CreateEvent() {
           quantity: String(t.quantity),
           enforce_limit: t.enforce_limit || false,
           max_per_user: String(t.max_per_user || 4),
+          limit_window_start: t.limit_window_start || "",
+          limit_window_end: t.limit_window_end || "",
+          limit_window_max: t.limit_window_max ? String(t.limit_window_max) : "",
         })));
       }
 
