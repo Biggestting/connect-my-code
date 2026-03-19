@@ -185,6 +185,16 @@ export default function Checkout() {
   const tierEnforceLimit = (selectedTicketTier as any)?.enforce_limit === true;
   const tierMaxPerUser = tierEnforceLimit ? ((selectedTicketTier as any)?.max_per_user || 4) : Infinity;
 
+  // Time-window limit
+  const tierWindowStart = (selectedTicketTier as any)?.limit_window_start;
+  const tierWindowEnd = (selectedTicketTier as any)?.limit_window_end;
+  const tierWindowMax = (selectedTicketTier as any)?.limit_window_max;
+  const nowMs = Date.now();
+  const isInWindow = tierWindowStart && tierWindowEnd && tierWindowMax
+    && nowMs >= new Date(tierWindowStart).getTime()
+    && nowMs < new Date(tierWindowEnd).getTime();
+  const activeMaxPerTier = isInWindow ? tierWindowMax : (tierEnforceLimit ? tierMaxPerUser : Infinity);
+
   if (activeTab === "ticket" && selectedTicketTier) {
     total = Number(selectedTicketTier.price) * quantity;
     available = selectedTicketTier.quantity - selectedTicketTier.sold_count;
@@ -192,9 +202,9 @@ export default function Checkout() {
     if (enforceLimit) {
       available = Math.min(available, maxPerUser);
     }
-    // Apply tier-level limit (stricter of the two)
-    if (tierEnforceLimit) {
-      available = Math.min(available, tierMaxPerUser);
+    // Apply active tier limit (time-window or standard)
+    if (activeMaxPerTier !== Infinity) {
+      available = Math.min(available, activeMaxPerTier);
     }
   } else if (activeTab === "costume" && selectedCostume) {
     total = Number(selectedCostume.price) * quantity;

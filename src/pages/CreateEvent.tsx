@@ -1091,16 +1091,72 @@ export default function CreateEvent() {
                       </div>
                     )}
                   </div>
+                  {tier.enforce_limit && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={!!tier.limit_window_start}
+                          onCheckedChange={(checked) => {
+                            const updated = [...ticketTiers];
+                            if (checked) {
+                              updated[i] = { ...updated[i], limit_window_start: new Date().toISOString().slice(0, 16), limit_window_end: "", limit_window_max: "" };
+                            } else {
+                              updated[i] = { ...updated[i], limit_window_start: "", limit_window_end: "", limit_window_max: "" };
+                            }
+                            setTicketTiers(updated);
+                          }}
+                        />
+                        <Label className="text-xs text-muted-foreground">Time-window limit</Label>
+                      </div>
+                      {tier.limit_window_start && (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Window Start (UTC)</Label>
+                            <Input
+                              type="datetime-local"
+                              value={tier.limit_window_start ? tier.limit_window_start.slice(0, 16) : ""}
+                              onChange={(e) => {
+                                const updated = [...ticketTiers];
+                                updated[i] = { ...updated[i], limit_window_start: e.target.value ? new Date(e.target.value).toISOString() : "" };
+                                setTicketTiers(updated);
+                              }}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Window End (UTC)</Label>
+                            <Input
+                              type="datetime-local"
+                              value={tier.limit_window_end ? tier.limit_window_end.slice(0, 16) : ""}
+                              onChange={(e) => {
+                                const updated = [...ticketTiers];
+                                updated[i] = { ...updated[i], limit_window_end: e.target.value ? new Date(e.target.value).toISOString() : "" };
+                                setTicketTiers(updated);
+                              }}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Max in Window</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={tier.limit_window_max}
+                              onChange={(e) => {
+                                const val = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
+                                const updated = [...ticketTiers];
+                                updated[i] = { ...updated[i], limit_window_max: String(val) };
+                                setTicketTiers(updated);
+                              }}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Button
-          type="submit"
-          disabled={loading || isLockedByOther}
-          className="w-full gradient-primary text-primary-foreground font-semibold rounded-full h-12"
         >
           {loading
             ? "Saving..."
