@@ -24,6 +24,19 @@ import { ImageUploadField } from "@/components/ImageUploadField";
 
 type PublishOption = "draft" | "publish" | "schedule";
 
+interface LineupItem {
+  id?: string;
+  artist_name: string;
+  image_url: string;
+}
+
+interface AgendaItem {
+  id?: string;
+  title: string;
+  time: string;
+  description: string;
+}
+
 interface EventFormState {
   title: string;
   description: string;
