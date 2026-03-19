@@ -195,6 +195,11 @@ export default function Discovery() {
                 <div className="p-3">
                   <h3 className="font-semibold text-sm text-foreground">{carnival.name}</h3>
                   <p className="text-xs text-muted-foreground">{carnival.city}, {carnival.country}</p>
+                  {carnivalEventCounts && carnivalEventCounts[carnival.id] > 0 && (
+                    <p className="text-xs text-primary font-medium mt-1">
+                      {carnivalEventCounts[carnival.id]} event{carnivalEventCounts[carnival.id] !== 1 ? "s" : ""}
+                    </p>
+                  )}
                 </div>
               </Link>
             ))}
