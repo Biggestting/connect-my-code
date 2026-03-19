@@ -300,6 +300,8 @@ export default function Checkout() {
         toast.error("You have reached the maximum number of tickets allowed for this event.");
       } else if (msg.includes("maximum number of tickets allowed for this tier")) {
         toast.error("You have reached the maximum number of tickets allowed for this tier.");
+      } else if (msg.includes("time-limited maximum")) {
+        toast.error("You have reached the time-limited maximum for this ticket tier.");
       } else {
         toast.error(msg);
       }
