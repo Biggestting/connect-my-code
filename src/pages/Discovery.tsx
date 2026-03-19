@@ -5,7 +5,7 @@ import { SearchBanner } from "@/components/SearchBanner";
 import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, isThisWeek, addDays, isBefore } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
-import { useCarnivals } from "@/hooks/use-carnivals";
+import { useCarnivals, useCarnivalEventCounts } from "@/hooks/use-carnivals";
 import { EventCard } from "@/components/EventCard";
 import { CategoryChips } from "@/components/CategoryChips";
 import { EventCardSkeleton } from "@/components/EventSkeleton";
