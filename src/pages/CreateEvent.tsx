@@ -54,6 +54,8 @@ interface EventFormState {
   hasAgenda: boolean;
   carnivalId: string;
   carnivalYear: string;
+  enforceTicketLimit: boolean;
+  maxTicketsPerUser: string;
 }
 
 const INITIAL_FORM: EventFormState = {
@@ -73,6 +75,8 @@ const INITIAL_FORM: EventFormState = {
   hasAgenda: false,
   carnivalId: "",
   carnivalYear: "",
+  enforceTicketLimit: false,
+  maxTicketsPerUser: "4",
 };
 
 const FORM_TO_DB: Record<string, string> = {
@@ -89,6 +93,8 @@ const FORM_TO_DB: Record<string, string> = {
   hasAgenda: "has_agenda",
   carnivalId: "carnival_id",
   carnivalYear: "carnival_year",
+  enforceTicketLimit: "enforce_ticket_limit",
+  maxTicketsPerUser: "max_tickets_per_user",
 };
 
 export default function CreateEvent() {
@@ -153,6 +159,8 @@ export default function CreateEvent() {
           hasAgenda: data.has_agenda || false,
           carnivalId: data.carnival_id || "",
           carnivalYear: data.carnival_year ? String(data.carnival_year) : "",
+          enforceTicketLimit: data.enforce_ticket_limit || false,
+          maxTicketsPerUser: data.max_tickets_per_user ? String(data.max_tickets_per_user) : "4",
         };
         setForm(loaded);
         setOriginalCarnivalId(data.carnival_id || "");
@@ -281,6 +289,8 @@ export default function CreateEvent() {
         hasAgenda: data.has_agenda || false,
         carnivalId: data.carnival_id || "",
         carnivalYear: data.carnival_year ? String(data.carnival_year) : "",
+        enforceTicketLimit: data.enforce_ticket_limit || false,
+        maxTicketsPerUser: data.max_tickets_per_user ? String(data.max_tickets_per_user) : "4",
       };
       setForm(loaded);
 
@@ -323,6 +333,8 @@ export default function CreateEvent() {
           dbPayload[dbKey] = val ? parseInt(val) : null;
         } else if (formKey === "state") {
           dbPayload[dbKey] = val || null;
+        } else if (formKey === "maxTicketsPerUser") {
+          dbPayload[dbKey] = val ? Math.max(1, Math.min(20, parseInt(val) || 4)) : 4;
         } else {
           dbPayload[dbKey] = val;
         }
@@ -439,6 +451,8 @@ export default function CreateEvent() {
       sales_status: "on_sale",
       carnival_id: form.carnivalId || null,
       carnival_year: form.carnivalYear ? parseInt(form.carnivalYear) : null,
+      enforce_ticket_limit: form.enforceTicketLimit,
+      max_tickets_per_user: form.enforceTicketLimit ? Math.max(1, Math.min(20, parseInt(form.maxTicketsPerUser) || 4)) : 4,
       publishing_status: publishingStatus,
       publish_at: publishOption === "schedule" ? new Date(publishAt).toISOString() : null,
       ticket_sales_start_at: ticketSalesOption === "schedule" ? new Date(ticketSalesStartAt).toISOString() : null,
@@ -720,6 +734,39 @@ export default function CreateEvent() {
           <Label>Price ($)</Label>
           <Input type="number" step="0.01" value={form.price} onChange={(e) => handleChange("price", e.target.value)} />
         </div>
+
+        {/* Per-user ticket limit */}
+        <div className="flex items-center justify-between py-2">
+          <div>
+            <Label>Limit tickets per user</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Restrict how many tickets each user can purchase</p>
+          </div>
+          <Switch
+            checked={form.enforceTicketLimit}
+            onCheckedChange={(v) => handleChange("enforceTicketLimit", v)}
+          />
+        </div>
+        {form.enforceTicketLimit && (
+          <div className="space-y-2 pl-1">
+            <Label>Maximum tickets per user</Label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={form.maxTicketsPerUser}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 20)) {
+                  handleChange("maxTicketsPerUser", val);
+                }
+              }}
+              placeholder="4"
+            />
+            <p className="text-xs text-muted-foreground">
+              Includes previously purchased and claimed tickets (1–20).
+            </p>
+          </div>
+        )}
         <ImageUploadField
           value={form.imageUrl}
           onChange={(url) => handleChange("imageUrl", url)}

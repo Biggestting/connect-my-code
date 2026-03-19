@@ -589,6 +589,7 @@ export type Database = {
           editing_at: string | null
           editing_by: string | null
           end_date: string | null
+          enforce_ticket_limit: boolean
           has_agenda: boolean
           has_lineup: boolean
           hidden: boolean
@@ -625,6 +626,7 @@ export type Database = {
           editing_at?: string | null
           editing_by?: string | null
           end_date?: string | null
+          enforce_ticket_limit?: boolean
           has_agenda?: boolean
           has_lineup?: boolean
           hidden?: boolean
@@ -661,6 +663,7 @@ export type Database = {
           editing_at?: string | null
           editing_by?: string | null
           end_date?: string | null
+          enforce_ticket_limit?: boolean
           has_agenda?: boolean
           has_lineup?: boolean
           hidden?: boolean
@@ -2032,6 +2035,14 @@ export type Database = {
         Returns: number
       }
       auto_publish_scheduled_events: { Args: never; Returns: undefined }
+      check_ticket_limit: {
+        Args: {
+          _event_id: string
+          _requested_quantity: number
+          _user_id: string
+        }
+        Returns: undefined
+      }
       claim_physical_ticket: {
         Args: { _claim_code: string; _user_id: string }
         Returns: {

@@ -66,12 +66,20 @@ export default function Checkout() {
 
   const tiers = event.ticket_tiers || [];
 
+  const enforceLimit = (event as any).enforce_ticket_limit === true;
+  const maxPerUser = enforceLimit ? (event.max_tickets_per_user || 4) : (event.max_tickets_per_user || 10);
+
   const updateQty = (tier: typeof tiers[0], delta: number) => {
     const existing = cart.get(tier.id);
     const currentQty = existing?.quantity || 0;
     const available = tier.quantity - tier.sold_count;
-    const maxPerUser = event.max_tickets_per_user || 10;
-    const newQty = Math.max(0, Math.min(currentQty + delta, available, maxPerUser));
+    // Total across all tiers when limit is enforced
+    const totalInCart = Array.from(cart.values()).reduce((s, i) => s + i.quantity, 0);
+    const otherTiersQty = totalInCart - currentQty;
+    const effectiveMax = enforceLimit
+      ? Math.min(available, maxPerUser - otherTiersQty)
+      : Math.min(available, maxPerUser);
+    const newQty = Math.max(0, Math.min(currentQty + delta, effectiveMax));
 
     const newCart = new Map(cart);
     if (newQty === 0) {
@@ -82,7 +90,7 @@ export default function Checkout() {
         name: tier.name,
         price: Number(tier.price),
         quantity: newQty,
-        maxQty: Math.min(available, maxPerUser),
+        maxQty: effectiveMax,
       });
     }
     setCart(newCart);
@@ -123,6 +131,16 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+
+      {/* Ticket limit notice */}
+      {enforceLimit && (
+        <div className="mx-4 mt-4 p-3 rounded-xl border border-primary/30 bg-primary/5">
+          <p className="text-xs text-primary font-medium flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            Limited to {maxPerUser} ticket{maxPerUser !== 1 ? "s" : ""} per person for this event.
+          </p>
+        </div>
+      )}
 
       {/* Tiers */}
       <div className="p-4 space-y-3">
