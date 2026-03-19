@@ -157,6 +157,8 @@ export default function CreateEvent() {
           hasAgenda: data.has_agenda || false,
           carnivalId: data.carnival_id || "",
           carnivalYear: data.carnival_year ? String(data.carnival_year) : "",
+          enforceTicketLimit: data.enforce_ticket_limit || false,
+          maxTicketsPerUser: data.max_tickets_per_user ? String(data.max_tickets_per_user) : "4",
         };
         setForm(loaded);
         setOriginalCarnivalId(data.carnival_id || "");
