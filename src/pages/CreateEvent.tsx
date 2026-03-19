@@ -75,6 +75,8 @@ const INITIAL_FORM: EventFormState = {
   hasAgenda: false,
   carnivalId: "",
   carnivalYear: "",
+  enforceTicketLimit: false,
+  maxTicketsPerUser: "4",
 };
 
 const FORM_TO_DB: Record<string, string> = {
