@@ -442,11 +442,11 @@ export default function Checkout() {
           </p>
         </div>
       )}
-      {activeTab === "ticket" && tierEnforceLimit && selectedTicketTier && (
+      {activeTab === "ticket" && selectedTicketTier && activeMaxPerTier !== Infinity && (
         <div className="mx-4 mt-2 p-3 rounded-xl border border-primary/30 bg-primary/5">
           <p className="text-xs text-primary font-medium flex items-center gap-2">
             <Lock className="w-3.5 h-3.5 shrink-0" />
-            {selectedTicketTier.name}: max {tierMaxPerUser} per person.
+            {selectedTicketTier.name}: max {activeMaxPerTier} per person{isInWindow ? " (time-limited)" : ""}.
           </p>
         </div>
       )}
