@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
         createError.message.toLowerCase().includes("email address has already been registered");
 
       if (!duplicateEmail) {
-        return jsonResponse({ error: createError.message }, 400);
+        console.error("User creation error:", createError);
+        return jsonResponse({ error: "Failed to create user account" }, 400);
       }
 
       const existingUser = await findExistingAuthUserByEmail(serviceClient, normalizedEmail);
@@ -217,7 +218,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("create-user error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });
