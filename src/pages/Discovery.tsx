@@ -5,7 +5,7 @@ import { SearchBanner } from "@/components/SearchBanner";
 import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, isThisWeek, addDays, isBefore } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
-import { useCarnivals } from "@/hooks/use-carnivals";
+import { useCarnivals, useCarnivalEventCounts } from "@/hooks/use-carnivals";
 import { EventCard } from "@/components/EventCard";
 import { CategoryChips } from "@/components/CategoryChips";
 import { EventCardSkeleton } from "@/components/EventSkeleton";
@@ -23,6 +23,7 @@ export default function Discovery() {
   const [selectedCity, setSelectedCity] = useState(getStoredLocation);
   const { data: events, isLoading, error } = useEvents(category, undefined, selectedCity);
   const { data: carnivals } = useCarnivals();
+  const { data: carnivalEventCounts } = useCarnivalEventCounts();
   const navigate = useNavigate();
   const carnivalSlugs = carnivals?.map(c => ({ name: c.name.toLowerCase(), slug: c.slug })) || [];
 
@@ -194,6 +195,11 @@ export default function Discovery() {
                 <div className="p-3">
                   <h3 className="font-semibold text-sm text-foreground">{carnival.name}</h3>
                   <p className="text-xs text-muted-foreground">{carnival.city}, {carnival.country}</p>
+                  {carnivalEventCounts && carnivalEventCounts[carnival.id] > 0 && (
+                    <p className="text-xs text-primary font-medium mt-1">
+                      {carnivalEventCounts[carnival.id]} event{carnivalEventCounts[carnival.id] !== 1 ? "s" : ""}
+                    </p>
+                  )}
                 </div>
               </Link>
             ))}
