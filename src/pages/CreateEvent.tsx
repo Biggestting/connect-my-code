@@ -93,6 +93,8 @@ const FORM_TO_DB: Record<string, string> = {
   hasAgenda: "has_agenda",
   carnivalId: "carnival_id",
   carnivalYear: "carnival_year",
+  enforceTicketLimit: "enforce_ticket_limit",
+  maxTicketsPerUser: "max_tickets_per_user",
 };
 
 export default function CreateEvent() {
