@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import tifeteLogo from "@/assets/tifete-logo-full.png";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,11 +70,9 @@ export default function AuthPage() {
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold">
-            <span className="gradient-primary bg-clip-text text-transparent">Ti'Fete</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2">Sign in to your account</p>
+        <div className="text-center space-y-3">
+          <img src={tifeteLogo} alt="Ti'Fete" className="h-12 mx-auto object-contain" />
+          <p className="text-sm text-muted-foreground">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
