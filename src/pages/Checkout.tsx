@@ -132,6 +132,16 @@ export default function Checkout() {
         </div>
       </div>
 
+      {/* Ticket limit notice */}
+      {enforceLimit && (
+        <div className="mx-4 mt-4 p-3 rounded-xl border border-primary/30 bg-primary/5">
+          <p className="text-xs text-primary font-medium flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            Limited to {maxPerUser} ticket{maxPerUser !== 1 ? "s" : ""} per person for this event.
+          </p>
+        </div>
+      )}
+
       {/* Tiers */}
       <div className="p-4 space-y-3">
         {tiers.map((tier) => {
