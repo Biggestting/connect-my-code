@@ -12,3 +12,6 @@ verify_jwt = false
 [functions.handle-promoter-request]
 verify_jwt = false
 
+[functions.claim-ticket]
+verify_jwt = false
+
