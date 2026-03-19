@@ -23,6 +23,7 @@ export default function Discovery() {
   const [selectedCity, setSelectedCity] = useState(getStoredLocation);
   const { data: events, isLoading, error } = useEvents(category, undefined, selectedCity);
   const { data: carnivals } = useCarnivals();
+  const { data: carnivalEventCounts } = useCarnivalEventCounts();
   const navigate = useNavigate();
   const carnivalSlugs = carnivals?.map(c => ({ name: c.name.toLowerCase(), slug: c.slug })) || [];
 
