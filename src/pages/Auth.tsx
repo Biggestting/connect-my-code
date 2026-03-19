@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import tifeteLogo from "@/assets/tifete-logo-full.png";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
