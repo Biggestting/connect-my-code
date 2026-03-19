@@ -204,6 +204,8 @@ export default function CreateEvent() {
           name: t.name,
           price: String(t.price),
           quantity: String(t.quantity),
+          enforce_limit: t.enforce_limit || false,
+          max_per_user: String(t.max_per_user || 4),
         })));
       }
 
