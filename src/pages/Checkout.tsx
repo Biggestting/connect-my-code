@@ -903,8 +903,7 @@ export default function Checkout() {
                   setTurnstileToken(token);
                   setShowCaptcha(false);
                 }}
-              />
-              />
+            )}
             )}
 
             {/* Two-step: Reserve → Purchase */}
