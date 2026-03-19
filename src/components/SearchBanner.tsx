@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { Search, MapPin, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { LocationSelector, getStoredLocation } from "@/components/LocationSelector";
+import { Search, MapPin } from "lucide-react";
+import { LocationSelector } from "@/components/LocationSelector";
+import { CATEGORIES } from "@/types";
 import { CATEGORIES } from "@/types";
 
 interface SearchBannerProps {
