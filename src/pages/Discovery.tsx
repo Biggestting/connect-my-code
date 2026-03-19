@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Search, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { getStoredLocation } from "@/components/LocationSelector";
 import { SearchBanner } from "@/components/SearchBanner";
 import { Link, useNavigate } from "react-router-dom";
