@@ -996,59 +996,92 @@ export default function CreateEvent() {
           {ticketTiers.length > 0 && (
             <div className="space-y-3">
               {ticketTiers.map((tier, i) => (
-                <div key={tier.id || `new-${i}`} className="flex gap-2 items-end">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs">Name</Label>
-                    <Input
-                      value={tier.name}
-                      onChange={(e) => {
-                        const updated = [...ticketTiers];
-                        updated[i] = { ...updated[i], name: e.target.value };
-                        setTicketTiers(updated);
+                <div key={tier.id || `new-${i}`} className="space-y-2 p-3 rounded-xl border border-border">
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs">Name</Label>
+                      <Input
+                        value={tier.name}
+                        onChange={(e) => {
+                          const updated = [...ticketTiers];
+                          updated[i] = { ...updated[i], name: e.target.value };
+                          setTicketTiers(updated);
+                        }}
+                        placeholder="e.g. General, VIP"
+                      />
+                    </div>
+                    <div className="w-24 space-y-1">
+                      <Label className="text-xs">Price ($)</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={tier.price}
+                        onChange={(e) => {
+                          const updated = [...ticketTiers];
+                          updated[i] = { ...updated[i], price: e.target.value };
+                          setTicketTiers(updated);
+                        }}
+                      />
+                    </div>
+                    <div className="w-24 space-y-1">
+                      <Label className="text-xs">Qty</Label>
+                      <Input
+                        type="number"
+                        value={tier.quantity}
+                        onChange={(e) => {
+                          const updated = [...ticketTiers];
+                          updated[i] = { ...updated[i], quantity: e.target.value };
+                          setTicketTiers(updated);
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                      onClick={async () => {
+                        if (tier.id) {
+                          await supabase.from("ticket_tiers").delete().eq("id", tier.id);
+                          toast.success("Tier deleted");
+                        }
+                        setTicketTiers((prev) => prev.filter((_, j) => j !== i));
                       }}
-                      placeholder="e.g. General, VIP"
-                    />
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <div className="w-24 space-y-1">
-                    <Label className="text-xs">Price ($)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={tier.price}
-                      onChange={(e) => {
-                        const updated = [...ticketTiers];
-                        updated[i] = { ...updated[i], price: e.target.value };
-                        setTicketTiers(updated);
-                      }}
-                    />
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={tier.enforce_limit}
+                        onCheckedChange={(checked) => {
+                          const updated = [...ticketTiers];
+                          updated[i] = { ...updated[i], enforce_limit: checked };
+                          setTicketTiers(updated);
+                        }}
+                      />
+                      <Label className="text-xs text-muted-foreground">Limit per user</Label>
+                    </div>
+                    {tier.enforce_limit && (
+                      <div className="flex items-center gap-1.5">
+                        <Label className="text-xs text-muted-foreground">Max</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={20}
+                          value={tier.max_per_user}
+                          onChange={(e) => {
+                            const val = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
+                            const updated = [...ticketTiers];
+                            updated[i] = { ...updated[i], max_per_user: String(val) };
+                            setTicketTiers(updated);
+                          }}
+                          className="w-16 h-7 text-xs"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="w-24 space-y-1">
-                    <Label className="text-xs">Qty</Label>
-                    <Input
-                      type="number"
-                      value={tier.quantity}
-                      onChange={(e) => {
-                        const updated = [...ticketTiers];
-                        updated[i] = { ...updated[i], quantity: e.target.value };
-                        setTicketTiers(updated);
-                      }}
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
-                    onClick={async () => {
-                      if (tier.id) {
-                        await supabase.from("ticket_tiers").delete().eq("id", tier.id);
-                        toast.success("Tier deleted");
-                      }
-                      setTicketTiers((prev) => prev.filter((_, j) => j !== i));
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
                 </div>
               ))}
             </div>
