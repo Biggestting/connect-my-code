@@ -218,7 +218,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("create-user error:", err);
-    const message = err instanceof Error ? err.message : "Internal server error";
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: "Internal server error" }, 500);
   }
 });

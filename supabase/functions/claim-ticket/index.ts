@@ -54,17 +54,16 @@ Deno.serve(async (req) => {
 
     if (rpcError) {
       console.error("Claim RPC error:", rpcError);
-      const msg = rpcError.message || "Failed to claim ticket";
+      const msg = rpcError.message || "";
 
-      // Map known error messages to user-friendly responses
       if (msg.includes("not found") || msg.includes("already claimed") || msg.includes("not a valid")) {
-        return new Response(JSON.stringify({ error: msg }), {
+        return new Response(JSON.stringify({ error: "This claim code is invalid or has already been used" }), {
           status: 409,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      return new Response(JSON.stringify({ error: msg }), {
+      return new Response(JSON.stringify({ error: "Failed to process ticket claim" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
