@@ -15,3 +15,6 @@ verify_jwt = false
 [functions.claim-ticket]
 verify_jwt = false
 
+[functions.approve-organizer-request]
+verify_jwt = false
+
