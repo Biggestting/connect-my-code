@@ -1918,6 +1918,7 @@ export type Database = {
           fulfillment_type: string
           id: string
           owner_user_id: string
+          parent_ticket_id: string | null
           purchase_id: string | null
           qr_token: string
           qr_token_expires_at: string
@@ -1938,6 +1939,7 @@ export type Database = {
           fulfillment_type?: string
           id?: string
           owner_user_id: string
+          parent_ticket_id?: string | null
           purchase_id?: string | null
           qr_token?: string
           qr_token_expires_at?: string
@@ -1958,6 +1960,7 @@ export type Database = {
           fulfillment_type?: string
           id?: string
           owner_user_id?: string
+          parent_ticket_id?: string | null
           purchase_id?: string | null
           qr_token?: string
           qr_token_expires_at?: string
@@ -1976,6 +1979,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_parent_ticket_id_fkey"
+            columns: ["parent_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
           {
@@ -2022,6 +2032,14 @@ export type Database = {
         Returns: number
       }
       auto_publish_scheduled_events: { Args: never; Returns: undefined }
+      claim_physical_ticket: {
+        Args: { _claim_code: string; _user_id: string }
+        Returns: {
+          event_id: string
+          new_ticket_id: string
+          ticket_tier_id: string
+        }[]
+      }
       complete_reservation: {
         Args: { _reservation_id: string; _user_id: string }
         Returns: boolean

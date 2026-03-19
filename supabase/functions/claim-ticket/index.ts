@@ -44,109 +44,47 @@ Deno.serve(async (req) => {
     }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
-    // Atomic claim via a single transaction using RPC
-    // We use the service role client to bypass RLS for the claim operation
     const normalizedCode = claim_code.trim().toUpperCase();
 
-    // 1. Find the ticket by claim_code
-    const { data: ticket, error: findError } = await adminClient
-      .from("tickets")
-      .select("id, status, fulfillment_type, claim_status, owner_user_id, event_id, ticket_tier_id, transfer_history")
-      .eq("claim_code", normalizedCode)
-      .maybeSingle();
+    // Call the atomic claim function — handles validation, invalidation, and creation in one transaction
+    const { data, error: rpcError } = await adminClient.rpc("claim_physical_ticket", {
+      _claim_code: normalizedCode,
+      _user_id: user.id,
+    });
 
-    if (findError) {
-      console.error("Find error:", findError);
-      return new Response(JSON.stringify({ error: "Failed to look up ticket" }), {
+    if (rpcError) {
+      console.error("Claim RPC error:", rpcError);
+      const msg = rpcError.message || "Failed to claim ticket";
+
+      // Map known error messages to user-friendly responses
+      if (msg.includes("not found") || msg.includes("already claimed") || msg.includes("not a valid")) {
+        return new Response(JSON.stringify({ error: msg }), {
+          status: 409,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: msg }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!ticket) {
-      return new Response(JSON.stringify({ error: "Invalid claim code" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // 2. Validate ticket state
-    if (ticket.fulfillment_type === "digital") {
-      return new Response(JSON.stringify({ error: "This is already a digital ticket and cannot be claimed" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (ticket.claim_status === "claimed") {
-      return new Response(JSON.stringify({ error: "This ticket has already been claimed" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (ticket.status !== "valid") {
-      return new Response(JSON.stringify({ error: `Ticket is not valid (status: ${ticket.status})` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // 3. Atomically claim: convert to digital, assign ownership, record history
-    const transferEntry = {
-      action: "physical_claim",
-      from_user_id: ticket.owner_user_id,
-      to_user_id: user.id,
-      previous_fulfillment_type: ticket.fulfillment_type,
-      claimed_at: new Date().toISOString(),
-      claim_code: normalizedCode,
-    };
-
-    const existingHistory = Array.isArray(ticket.transfer_history) ? ticket.transfer_history : [];
-
-    const { error: updateError } = await adminClient
-      .from("tickets")
-      .update({
-        owner_user_id: user.id,
-        claim_status: "claimed",
-        fulfillment_type: "digital",
-        status: "valid",
-        transfer_history: [...existingHistory, transferEntry],
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", ticket.id)
-      .eq("claim_status", "unclaimed") // Optimistic lock — prevents double-claim
-      .eq("status", "valid");
-
-    if (updateError) {
-      console.error("Update error:", updateError);
-      return new Response(JSON.stringify({ error: "Failed to claim ticket" }), {
+    if (!data || data.length === 0) {
+      return new Response(JSON.stringify({ error: "Claim failed — no ticket returned" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Verify the update actually happened (optimistic lock check)
-    const { data: claimed } = await adminClient
-      .from("tickets")
-      .select("id, claim_status, fulfillment_type, owner_user_id")
-      .eq("id", ticket.id)
-      .single();
-
-    if (!claimed || claimed.claim_status !== "claimed" || claimed.owner_user_id !== user.id) {
-      return new Response(JSON.stringify({ error: "Ticket was claimed by another user" }), {
-        status: 409,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const result = data[0];
 
     return new Response(
       JSON.stringify({
         success: true,
-        ticket_id: ticket.id,
-        event_id: ticket.event_id,
-        message: "Ticket claimed successfully",
+        ticket_id: result.new_ticket_id,
+        event_id: result.event_id,
+        message: "Physical ticket claimed and converted to digital",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

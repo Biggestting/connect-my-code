@@ -19,6 +19,7 @@ export interface Ticket {
   qr_token_expires_at: string;
   scanned_at: string | null;
   scanned_by: string | null;
+  parent_ticket_id: string | null;
   created_at: string;
   updated_at: string;
 }
