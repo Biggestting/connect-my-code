@@ -29,7 +29,7 @@ export function TopNav() {
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center shrink-0">
-          <img src={tifeteLogo} alt="Ti'Fete" className="h-10 w-auto" />
+          <img src={tifeteLogo} alt="Ti'Fete" className="h-[62px] w-auto" />
         </Link>
 
         {/* Center nav links */}
