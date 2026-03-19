@@ -39,9 +39,9 @@ export function SearchBanner({
         </div>
       </div>
 
-      {/* Desktop gradient search banner */}
-      <div className="hidden md:block gradient-primary py-8 -mx-4 lg:-mx-8">
-        <div className="container">
+      {/* Desktop gradient search banner — breaks out of container */}
+      <div className="hidden md:block gradient-primary py-8" style={{ marginLeft: "calc(-50vw + 50%)", marginRight: "calc(-50vw + 50%)", paddingLeft: "calc(50vw - 50%)", paddingRight: "calc(50vw - 50%)" }}>
+        <div className="max-w-5xl mx-auto px-4">
           <form
             onSubmit={onSearch}
             className="bg-card rounded-2xl shadow-lg flex items-stretch overflow-hidden"
