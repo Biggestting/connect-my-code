@@ -1545,23 +1545,29 @@ export type Database = {
       purchase_attempts: {
         Row: {
           created_at: string
+          device_fingerprint: string | null
           event_id: string
           id: string
           ip_address: string | null
+          user_agent: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          device_fingerprint?: string | null
           event_id: string
           id?: string
           ip_address?: string | null
+          user_agent?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          device_fingerprint?: string | null
           event_id?: string
           id?: string
           ip_address?: string | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: [
