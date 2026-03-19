@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
-import { Search, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import { LocationSelector, getStoredLocation } from "@/components/LocationSelector";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { getStoredLocation } from "@/components/LocationSelector";
+import { SearchBanner } from "@/components/SearchBanner";
 import { Link, useNavigate } from "react-router-dom";
 import { format, isToday, isThisWeek, addDays, isBefore } from "date-fns";
 import { useEvents } from "@/hooks/use-events";
@@ -57,21 +58,16 @@ export default function Discovery() {
 
   return (
     <div className="pb-24 md:pb-8">
-      {/* Search Bar */}
-      <div className="px-4 pt-4 pb-2">
-        <form onSubmit={handleSearch} className="flex items-center gap-3 bg-muted rounded-full px-4 py-2.5">
-          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Events, Organizers, or Venues"
-            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-          />
-        </form>
-        <div className="mt-3">
-          <LocationSelector value={selectedCity} onChange={setSelectedCity} />
-        </div>
-      </div>
+      {/* Search Banner */}
+      <SearchBanner
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearch={handleSearch}
+        category={category}
+        onCategoryChange={setCategory}
+        selectedCity={selectedCity}
+        onCityChange={setSelectedCity}
+      />
 
       {/* Hero Carousel */}
       {featuredEvents.length > 0 && <HeroCarousel events={featuredEvents} />}

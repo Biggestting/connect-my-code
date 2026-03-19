@@ -25,37 +25,39 @@ export function TopNav() {
       ];
 
   return (
-    <header className="hidden md:flex sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container flex h-14 items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={tifeteLogo} alt="Ti'Fete" className="h-8 w-auto" />
-          </Link>
-          <nav className="flex items-center gap-6">
-            {links.map((link) => (
-              <Link
-                key={link.path + link.label}
-                to={link.path}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-foreground",
-                  pathname === link.path ? "text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
+    <header className="hidden md:block sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
+      <div className="container flex h-16 items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center shrink-0">
+          <img src={tifeteLogo} alt="Ti'Fete" className="h-10 w-auto" />
+        </Link>
+
+        {/* Center nav links */}
+        <nav className="flex items-center gap-8">
+          {links.map((link) => (
+            <Link
+              key={link.path + link.label}
+              to={link.path}
+              className={cn(
+                "text-sm font-semibold transition-colors hover:text-primary",
+                pathname === link.path
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right actions */}
         <div className="flex items-center gap-4">
-          <Link to="/search" className="text-muted-foreground hover:text-foreground transition-colors">
-            <Search className="h-5 w-5" />
-          </Link>
           {user ? (
             <ProfileSwitcher />
           ) : (
             <Link
               to="/auth"
-              className="gradient-primary text-primary-foreground text-sm font-semibold px-5 py-2 rounded-full hover:opacity-90 transition-opacity"
+              className="gradient-primary text-primary-foreground text-sm font-semibold px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity"
             >
               Sign In
             </Link>
