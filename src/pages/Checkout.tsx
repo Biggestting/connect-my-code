@@ -232,12 +232,21 @@ export default function Checkout() {
   // Call checkout-guard edge function
   const runCheckoutGuard = async (): Promise<boolean> => {
     try {
+      // Simple device fingerprint from available browser signals
+      const deviceFingerprint = [
+        navigator.userAgent,
+        navigator.language,
+        screen.width + "x" + screen.height,
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+      ].join("|");
+
       const { data, error } = await supabase.functions.invoke("checkout-guard", {
         body: {
           eventId: event.id,
           quantity,
           productType: activeTab,
           turnstileToken: turnstileToken || undefined,
+          deviceFingerprint,
         },
       });
 

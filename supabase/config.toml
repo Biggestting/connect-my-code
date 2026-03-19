@@ -21,3 +21,6 @@ verify_jwt = false
 [functions.create-user]
 verify_jwt = false
 
+[functions.checkout-guard]
+verify_jwt = false
+
