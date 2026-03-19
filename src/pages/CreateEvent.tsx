@@ -740,6 +740,140 @@ export default function CreateEvent() {
           <Switch checked={form.hasAgenda} onCheckedChange={(v) => handleChange("hasAgenda", v)} />
         </div>
 
+        {/* Lineup Section */}
+        {form.hasLineup && (
+          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-foreground font-semibold">Lineup</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-1 h-7 text-xs"
+                onClick={() => setLineupItems((prev) => [...prev, { artist_name: "", image_url: "" }])}
+              >
+                <Plus className="w-3 h-3" /> Add Artist
+              </Button>
+            </div>
+            {lineupItems.length === 0 && (
+              <p className="text-xs text-muted-foreground">Add artists performing at this event.</p>
+            )}
+            <div className="space-y-2">
+              {lineupItems.map((item, i) => (
+                <div key={item.id || `lineup-${i}`} className="flex gap-2 items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Artist Name</Label>
+                    <Input
+                      value={item.artist_name}
+                      onChange={(e) => {
+                        const updated = [...lineupItems];
+                        updated[i] = { ...updated[i], artist_name: e.target.value };
+                        setLineupItems(updated);
+                      }}
+                      placeholder="e.g. Machel Montano"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Image URL</Label>
+                    <Input
+                      value={item.image_url}
+                      onChange={(e) => {
+                        const updated = [...lineupItems];
+                        updated[i] = { ...updated[i], image_url: e.target.value };
+                        setLineupItems(updated);
+                      }}
+                      placeholder="Optional"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                    onClick={() => setLineupItems((prev) => prev.filter((_, j) => j !== i))}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Agenda Section */}
+        {form.hasAgenda && (
+          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-foreground font-semibold">Agenda</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full gap-1 h-7 text-xs"
+                onClick={() => setAgendaItems((prev) => [...prev, { title: "", time: "", description: "" }])}
+              >
+                <Plus className="w-3 h-3" /> Add Item
+              </Button>
+            </div>
+            {agendaItems.length === 0 && (
+              <p className="text-xs text-muted-foreground">Add schedule items for this event.</p>
+            )}
+            <div className="space-y-3">
+              {agendaItems.map((item, i) => (
+                <div key={item.id || `agenda-${i}`} className="space-y-2 p-3 rounded-lg border border-border/50 bg-background">
+                  <div className="flex gap-2 items-end">
+                    <div className="w-28 space-y-1">
+                      <Label className="text-xs">Time</Label>
+                      <Input
+                        value={item.time}
+                        onChange={(e) => {
+                          const updated = [...agendaItems];
+                          updated[i] = { ...updated[i], time: e.target.value };
+                          setAgendaItems(updated);
+                        }}
+                        placeholder="e.g. 8:00 PM"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs">Title</Label>
+                      <Input
+                        value={item.title}
+                        onChange={(e) => {
+                          const updated = [...agendaItems];
+                          updated[i] = { ...updated[i], title: e.target.value };
+                          setAgendaItems(updated);
+                        }}
+                        placeholder="e.g. Doors Open"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => setAgendaItems((prev) => prev.filter((_, j) => j !== i))}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Description (optional)</Label>
+                    <Input
+                      value={item.description}
+                      onChange={(e) => {
+                        const updated = [...agendaItems];
+                        updated[i] = { ...updated[i], description: e.target.value };
+                        setAgendaItems(updated);
+                      }}
+                      placeholder="Brief description"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Publish Options */}
         <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30">
           <Label className="text-foreground font-semibold">Publish Options</Label>
