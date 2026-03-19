@@ -1,7 +1,6 @@
 import { Search, MapPin } from "lucide-react";
 import { LocationSelector } from "@/components/LocationSelector";
 import { CATEGORIES } from "@/types";
-import { CATEGORIES } from "@/types";
 
 interface SearchBannerProps {
   searchQuery: string;
