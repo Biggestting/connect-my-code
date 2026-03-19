@@ -114,7 +114,7 @@ export default function Checkout() {
         </div>
         <QueueWaitingRoom
           position={queueEntry?.position || waitingCount + 1}
-          totalWaiting={waitingCount}
+          waitingCount={waitingCount}
           isWaiting={isWaiting}
           onJoinQueue={() => joinQueue.mutate()}
           isJoining={joinQueue.isPending}
