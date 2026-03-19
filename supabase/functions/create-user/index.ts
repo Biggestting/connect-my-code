@@ -84,20 +84,24 @@ Deno.serve(async (req) => {
 
     const userId = newUser.user.id;
 
-    // Update profile with additional details (profile is auto-created by trigger)
-    const profileUpdate: Record<string, any> = {};
-    if (display_name) profileUpdate.display_name = display_name;
-    if (first_name) profileUpdate.first_name = first_name;
-    if (last_name) profileUpdate.last_name = last_name;
-    if (city) profileUpdate.city = city;
-    if (country) profileUpdate.country = country;
-    if (phone_number) profileUpdate.phone_number = phone_number;
+    // Upsert profile — trigger may not fire for admin-created users
+    const profileData: Record<string, any> = {
+      user_id: userId,
+      email,
+      display_name: display_name || email.split("@")[0],
+    };
+    if (first_name) profileData.first_name = first_name;
+    if (last_name) profileData.last_name = last_name;
+    if (city) profileData.city = city;
+    if (country) profileData.country = country;
+    if (phone_number) profileData.phone_number = phone_number;
 
-    if (Object.keys(profileUpdate).length > 0) {
-      await serviceClient
-        .from("profiles")
-        .update(profileUpdate)
-        .eq("user_id", userId);
+    const { error: profileError } = await serviceClient
+      .from("profiles")
+      .upsert(profileData, { onConflict: "user_id" });
+
+    if (profileError) {
+      console.error("Profile upsert failed:", profileError.message);
     }
 
     // Assign role if specified
