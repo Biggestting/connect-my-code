@@ -449,6 +449,8 @@ export default function CreateEvent() {
       sales_status: "on_sale",
       carnival_id: form.carnivalId || null,
       carnival_year: form.carnivalYear ? parseInt(form.carnivalYear) : null,
+      enforce_ticket_limit: form.enforceTicketLimit,
+      max_tickets_per_user: form.enforceTicketLimit ? Math.max(1, Math.min(20, parseInt(form.maxTicketsPerUser) || 4)) : 4,
       publishing_status: publishingStatus,
       publish_at: publishOption === "schedule" ? new Date(publishAt).toISOString() : null,
       ticket_sales_start_at: ticketSalesOption === "schedule" ? new Date(ticketSalesStartAt).toISOString() : null,
