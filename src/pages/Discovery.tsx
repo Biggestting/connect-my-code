@@ -242,7 +242,7 @@ function HeroCarousel({ events }: { events: EventWithRelations[] }) {
             {event.image_url ? (
               <img src={event.image_url} alt={event.title} className="w-full h-full object-cover" loading="lazy" />
             ) : (
-              <EventFallbackImage title={event.title} date={event.date} category={event.category} />
+              <EventFallbackImage title={event.title} date={event.date} category={event.category} className="!p-0 [&>div:last-child]:hidden" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
