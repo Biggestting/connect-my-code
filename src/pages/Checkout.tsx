@@ -181,12 +181,20 @@ export default function Checkout() {
   let depositAmt = 0;
   let balanceAmt = 0;
 
+  // Tier-level limit
+  const tierEnforceLimit = (selectedTicketTier as any)?.enforce_limit === true;
+  const tierMaxPerUser = tierEnforceLimit ? ((selectedTicketTier as any)?.max_per_user || 4) : Infinity;
+
   if (activeTab === "ticket" && selectedTicketTier) {
     total = Number(selectedTicketTier.price) * quantity;
     available = selectedTicketTier.quantity - selectedTicketTier.sold_count;
-    // Apply per-user ticket limit to available
+    // Apply event-level limit
     if (enforceLimit) {
       available = Math.min(available, maxPerUser);
+    }
+    // Apply tier-level limit (stricter of the two)
+    if (tierEnforceLimit) {
+      available = Math.min(available, tierMaxPerUser);
     }
   } else if (activeTab === "costume" && selectedCostume) {
     total = Number(selectedCostume.price) * quantity;
@@ -278,8 +286,10 @@ export default function Checkout() {
       toast.success("Items reserved! Complete your purchase before the timer expires.");
     } catch (err: any) {
       const msg = err.message || "Failed to reserve inventory";
-      if (msg.includes("maximum number of tickets")) {
+      if (msg.includes("maximum number of tickets allowed for this event")) {
         toast.error("You have reached the maximum number of tickets allowed for this event.");
+      } else if (msg.includes("maximum number of tickets allowed for this tier")) {
+        toast.error("You have reached the maximum number of tickets allowed for this tier.");
       } else {
         toast.error(msg);
       }
@@ -411,12 +421,20 @@ export default function Checkout() {
         </div>
       )}
 
-      {/* Ticket limit notice */}
-      {enforceLimit && activeTab === "ticket" && (
+      {/* Ticket limit notices */}
+      {activeTab === "ticket" && enforceLimit && (
         <div className="mx-4 mt-4 p-3 rounded-xl border border-primary/30 bg-primary/5">
           <p className="text-xs text-primary font-medium flex items-center gap-2">
             <Lock className="w-3.5 h-3.5 shrink-0" />
             Limited to {maxPerUser} ticket{maxPerUser !== 1 ? "s" : ""} per person for this event.
+          </p>
+        </div>
+      )}
+      {activeTab === "ticket" && tierEnforceLimit && selectedTicketTier && (
+        <div className="mx-4 mt-2 p-3 rounded-xl border border-primary/30 bg-primary/5">
+          <p className="text-xs text-primary font-medium flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            {selectedTicketTier.name}: max {tierMaxPerUser} per person.
           </p>
         </div>
       )}

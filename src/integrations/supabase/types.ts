@@ -1877,8 +1877,10 @@ export type Database = {
       ticket_tiers: {
         Row: {
           created_at: string
+          enforce_limit: boolean
           event_id: string
           id: string
+          max_per_user: number
           name: string
           price: number
           quantity: number
@@ -1886,8 +1888,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          enforce_limit?: boolean
           event_id: string
           id?: string
+          max_per_user?: number
           name: string
           price: number
           quantity?: number
@@ -1895,8 +1899,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          enforce_limit?: boolean
           event_id?: string
           id?: string
+          max_per_user?: number
           name?: string
           price?: number
           quantity?: number
@@ -2035,14 +2041,24 @@ export type Database = {
         Returns: number
       }
       auto_publish_scheduled_events: { Args: never; Returns: undefined }
-      check_ticket_limit: {
-        Args: {
-          _event_id: string
-          _requested_quantity: number
-          _user_id: string
-        }
-        Returns: undefined
-      }
+      check_ticket_limit:
+        | {
+            Args: {
+              _event_id: string
+              _requested_quantity: number
+              _user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _event_id: string
+              _requested_quantity: number
+              _ticket_tier_id?: string
+              _user_id: string
+            }
+            Returns: undefined
+          }
       claim_physical_ticket: {
         Args: { _claim_code: string; _user_id: string }
         Returns: {
