@@ -4,18 +4,15 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminAction } from "@/hooks/use-platform";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Search, Users, MoreVertical, Snowflake, Play, Ban, Shield } from "lucide-react";
+import { Search, Users, MoreVertical, Snowflake, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   active: "bg-green-100 text-green-700",
   frozen: "bg-blue-100 text-blue-700",
-  suspended: "bg-orange-100 text-orange-700",
-  banned: "bg-red-100 text-red-700",
 };
 
 export default function AdminOrganizersPage() {
@@ -48,9 +45,7 @@ export default function AdminOrganizersPage() {
       open: true,
       title: actionLabel,
       description: `Are you sure you want to ${actionLabel.toLowerCase()} "${org.name}"?${
-        newStatus === "frozen" ? " They won't be able to create or edit events, and their ticket sales will be paused." :
-        newStatus === "banned" ? " This is permanent. Their account and events will be deactivated." :
-        ""
+        newStatus === "frozen" ? " They won't be able to create or edit events, and their ticket sales will be paused." : ""
       }`,
       onConfirm: async () => {
         try {
@@ -65,6 +60,34 @@ export default function AdminOrganizersPage() {
             },
           });
           toast.success(`${org.name} is now ${newStatus}`);
+          queryClient.invalidateQueries({ queryKey: ["admin-organizers-full"] });
+        } catch (err: any) {
+          toast.error(err.message);
+        }
+      },
+    });
+  };
+
+  const deleteOrganizer = (org: any) => {
+    setConfirmDialog({
+      open: true,
+      title: "Delete Organizer",
+      description: `Are you sure you want to delete "${org.name}" (@${org.slug})? This will remove their organizer profile and members. They can reapply in the future.`,
+      onConfirm: async () => {
+        try {
+          await adminAction.mutateAsync({
+            action: "delete_organizer",
+            targetType: "organizer",
+            targetId: org.id,
+            details: { name: org.name, slug: org.slug },
+            execute: async () => {
+              // Delete members first, then organizer
+              await supabase.from("organizer_members").delete().eq("organizer_id", org.id);
+              const { error } = await supabase.from("organizers").delete().eq("id", org.id);
+              if (error) throw error;
+            },
+          });
+          toast.success(`${org.name} has been deleted`);
           queryClient.invalidateQueries({ queryKey: ["admin-organizers-full"] });
         } catch (err: any) {
           toast.error(err.message);
@@ -90,9 +113,7 @@ export default function AdminOrganizersPage() {
           <div className="space-y-2">
             {filtered?.map((org: any) => (
               <div key={org.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
-                org.status === "banned" ? "border-destructive/30 bg-destructive/5" :
                 org.status === "frozen" ? "border-blue-300 bg-blue-50/50" :
-                org.status === "suspended" ? "border-orange-300 bg-orange-50/50" :
                 "border-border hover:bg-muted/50"
               }`}>
                 {org.logo_url ? (
@@ -103,7 +124,7 @@ export default function AdminOrganizersPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">{org.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {org.events_count} events · {org.follower_count} followers
+                    @{org.slug} · {org.events_count} events · {org.follower_count} followers
                   </p>
                 </div>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[org.status] || statusColors.active}`}>
@@ -115,7 +136,7 @@ export default function AdminOrganizersPage() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {org.status !== "active" && (
-                      <DropdownMenuItem onClick={() => changeStatus(org, "active", "Unfreeze Organizer")}>
+                      <DropdownMenuItem onClick={() => changeStatus(org, "active", "Activate Organizer")}>
                         <Play className="w-3.5 h-3.5 mr-2" /> Activate
                       </DropdownMenuItem>
                     )}
@@ -124,16 +145,9 @@ export default function AdminOrganizersPage() {
                         <Snowflake className="w-3.5 h-3.5 mr-2" /> Freeze
                       </DropdownMenuItem>
                     )}
-                    {org.status !== "suspended" && (
-                      <DropdownMenuItem onClick={() => changeStatus(org, "suspended", "Suspend Organizer")}>
-                        <Shield className="w-3.5 h-3.5 mr-2" /> Suspend
-                      </DropdownMenuItem>
-                    )}
-                    {org.status !== "banned" && (
-                      <DropdownMenuItem onClick={() => changeStatus(org, "banned", "Permanently Ban Organizer")} className="text-destructive">
-                        <Ban className="w-3.5 h-3.5 mr-2" /> Ban
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem onClick={() => deleteOrganizer(org)} className="text-destructive">
+                      <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
