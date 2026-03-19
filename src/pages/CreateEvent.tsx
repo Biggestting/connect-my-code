@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useOrganizerByUserId } from "@/hooks/use-organizer";
 import { useCarnivals } from "@/hooks/use-carnivals";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Lock, MapPin, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Lock, MapPin, Plus, Trash2, AlertTriangle, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
