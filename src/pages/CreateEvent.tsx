@@ -198,6 +198,36 @@ export default function CreateEvent() {
           quantity: String(t.quantity),
         })));
       }
+
+      // Load lineup items
+      const { data: lineupData } = await supabase
+        .from("event_lineup")
+        .select("*")
+        .eq("event_id", editEventId)
+        .order("sort_order", { ascending: true });
+      if (lineupData) {
+        setLineupItems(lineupData.map((l: any) => ({
+          id: l.id,
+          artist_name: l.artist_name,
+          image_url: l.image_url || "",
+        })));
+      }
+
+      // Load agenda items
+      const { data: agendaData } = await supabase
+        .from("event_agenda")
+        .select("*")
+        .eq("event_id", editEventId)
+        .order("sort_order", { ascending: true });
+      if (agendaData) {
+        setAgendaItems(agendaData.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          time: a.time,
+          description: a.description || "",
+        })));
+      }
+
       setTiersLoaded(true);
     };
     loadEvent();
