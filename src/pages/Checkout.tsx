@@ -185,6 +185,16 @@ export default function Checkout() {
   const tierEnforceLimit = (selectedTicketTier as any)?.enforce_limit === true;
   const tierMaxPerUser = tierEnforceLimit ? ((selectedTicketTier as any)?.max_per_user || 4) : Infinity;
 
+  // Time-window limit
+  const tierWindowStart = (selectedTicketTier as any)?.limit_window_start;
+  const tierWindowEnd = (selectedTicketTier as any)?.limit_window_end;
+  const tierWindowMax = (selectedTicketTier as any)?.limit_window_max;
+  const nowMs = Date.now();
+  const isInWindow = tierWindowStart && tierWindowEnd && tierWindowMax
+    && nowMs >= new Date(tierWindowStart).getTime()
+    && nowMs < new Date(tierWindowEnd).getTime();
+  const activeMaxPerTier = isInWindow ? tierWindowMax : (tierEnforceLimit ? tierMaxPerUser : Infinity);
+
   if (activeTab === "ticket" && selectedTicketTier) {
     total = Number(selectedTicketTier.price) * quantity;
     available = selectedTicketTier.quantity - selectedTicketTier.sold_count;
@@ -192,9 +202,9 @@ export default function Checkout() {
     if (enforceLimit) {
       available = Math.min(available, maxPerUser);
     }
-    // Apply tier-level limit (stricter of the two)
-    if (tierEnforceLimit) {
-      available = Math.min(available, tierMaxPerUser);
+    // Apply active tier limit (time-window or standard)
+    if (activeMaxPerTier !== Infinity) {
+      available = Math.min(available, activeMaxPerTier);
     }
   } else if (activeTab === "costume" && selectedCostume) {
     total = Number(selectedCostume.price) * quantity;
@@ -290,6 +300,8 @@ export default function Checkout() {
         toast.error("You have reached the maximum number of tickets allowed for this event.");
       } else if (msg.includes("maximum number of tickets allowed for this tier")) {
         toast.error("You have reached the maximum number of tickets allowed for this tier.");
+      } else if (msg.includes("time-limited maximum")) {
+        toast.error("You have reached the time-limited maximum for this ticket tier.");
       } else {
         toast.error(msg);
       }
@@ -430,11 +442,11 @@ export default function Checkout() {
           </p>
         </div>
       )}
-      {activeTab === "ticket" && tierEnforceLimit && selectedTicketTier && (
+      {activeTab === "ticket" && selectedTicketTier && activeMaxPerTier !== Infinity && (
         <div className="mx-4 mt-2 p-3 rounded-xl border border-primary/30 bg-primary/5">
           <p className="text-xs text-primary font-medium flex items-center gap-2">
             <Lock className="w-3.5 h-3.5 shrink-0" />
-            {selectedTicketTier.name}: max {tierMaxPerUser} per person.
+            {selectedTicketTier.name}: max {activeMaxPerTier} per person{isInWindow ? " (time-limited)" : ""}.
           </p>
         </div>
       )}

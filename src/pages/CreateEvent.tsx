@@ -115,7 +115,7 @@ export default function CreateEvent() {
   const [form, setForm] = useState<EventFormState>(INITIAL_FORM);
 
   // Ticket tiers state (for edit mode)
-  const [ticketTiers, setTicketTiers] = useState<{ id?: string; name: string; price: string; quantity: string; enforce_limit: boolean; max_per_user: string }[]>([]);
+  const [ticketTiers, setTicketTiers] = useState<{ id?: string; name: string; price: string; quantity: string; enforce_limit: boolean; max_per_user: string; limit_window_start: string; limit_window_end: string; limit_window_max: string }[]>([]);
   const [tiersLoaded, setTiersLoaded] = useState(false);
 
   // Draft recovery state
@@ -206,6 +206,9 @@ export default function CreateEvent() {
           quantity: String(t.quantity),
           enforce_limit: t.enforce_limit || false,
           max_per_user: String(t.max_per_user || 4),
+          limit_window_start: t.limit_window_start || "",
+          limit_window_end: t.limit_window_end || "",
+          limit_window_max: t.limit_window_max ? String(t.limit_window_max) : "",
         })));
       }
 
@@ -487,6 +490,9 @@ export default function CreateEvent() {
               quantity: parseInt(tier.quantity) || 0,
               enforce_limit: tier.enforce_limit,
               max_per_user: parseInt(tier.max_per_user) || 4,
+              limit_window_start: tier.limit_window_start || null,
+              limit_window_end: tier.limit_window_end || null,
+              limit_window_max: tier.limit_window_max ? parseInt(tier.limit_window_max) : null,
             } as any).eq("id", tier.id);
           } else {
             // Insert new tier
@@ -497,6 +503,9 @@ export default function CreateEvent() {
               quantity: parseInt(tier.quantity) || 0,
               enforce_limit: tier.enforce_limit,
               max_per_user: parseInt(tier.max_per_user) || 4,
+              limit_window_start: tier.limit_window_start || null,
+              limit_window_end: tier.limit_window_end || null,
+              limit_window_max: tier.limit_window_max ? parseInt(tier.limit_window_max) : null,
             } as any);
           }
         }
@@ -985,7 +994,7 @@ export default function CreateEvent() {
               variant="outline"
               size="sm"
               className="rounded-full gap-1 h-7 text-xs"
-              onClick={() => setTicketTiers((prev) => [...prev, { name: "", price: "0", quantity: "100", enforce_limit: false, max_per_user: "4" }])}
+              onClick={() => setTicketTiers((prev) => [...prev, { name: "", price: "0", quantity: "100", enforce_limit: false, max_per_user: "4", limit_window_start: "", limit_window_end: "", limit_window_max: "" }])}
             >
               <Plus className="w-3 h-3" /> Add Tier
             </Button>
@@ -1082,6 +1091,71 @@ export default function CreateEvent() {
                       </div>
                     )}
                   </div>
+                  {tier.enforce_limit && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={!!tier.limit_window_start}
+                          onCheckedChange={(checked) => {
+                            const updated = [...ticketTiers];
+                            if (checked) {
+                              updated[i] = { ...updated[i], limit_window_start: new Date().toISOString().slice(0, 16), limit_window_end: "", limit_window_max: "" };
+                            } else {
+                              updated[i] = { ...updated[i], limit_window_start: "", limit_window_end: "", limit_window_max: "" };
+                            }
+                            setTicketTiers(updated);
+                          }}
+                        />
+                        <Label className="text-xs text-muted-foreground">Time-window limit</Label>
+                      </div>
+                      {tier.limit_window_start && (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Window Start (UTC)</Label>
+                            <Input
+                              type="datetime-local"
+                              value={tier.limit_window_start ? tier.limit_window_start.slice(0, 16) : ""}
+                              onChange={(e) => {
+                                const updated = [...ticketTiers];
+                                updated[i] = { ...updated[i], limit_window_start: e.target.value ? new Date(e.target.value).toISOString() : "" };
+                                setTicketTiers(updated);
+                              }}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Window End (UTC)</Label>
+                            <Input
+                              type="datetime-local"
+                              value={tier.limit_window_end ? tier.limit_window_end.slice(0, 16) : ""}
+                              onChange={(e) => {
+                                const updated = [...ticketTiers];
+                                updated[i] = { ...updated[i], limit_window_end: e.target.value ? new Date(e.target.value).toISOString() : "" };
+                                setTicketTiers(updated);
+                              }}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Max in Window</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={20}
+                              value={tier.limit_window_max}
+                              onChange={(e) => {
+                                const val = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
+                                const updated = [...ticketTiers];
+                                updated[i] = { ...updated[i], limit_window_max: String(val) };
+                                setTicketTiers(updated);
+                              }}
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
