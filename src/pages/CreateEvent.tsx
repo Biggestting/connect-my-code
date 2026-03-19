@@ -333,6 +333,8 @@ export default function CreateEvent() {
           dbPayload[dbKey] = val ? parseInt(val) : null;
         } else if (formKey === "state") {
           dbPayload[dbKey] = val || null;
+        } else if (formKey === "maxTicketsPerUser") {
+          dbPayload[dbKey] = val ? Math.max(1, Math.min(20, parseInt(val) || 4)) : 4;
         } else {
           dbPayload[dbKey] = val;
         }
