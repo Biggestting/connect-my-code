@@ -419,12 +419,20 @@ export default function Checkout() {
         </div>
       )}
 
-      {/* Ticket limit notice */}
-      {enforceLimit && activeTab === "ticket" && (
+      {/* Ticket limit notices */}
+      {activeTab === "ticket" && enforceLimit && (
         <div className="mx-4 mt-4 p-3 rounded-xl border border-primary/30 bg-primary/5">
           <p className="text-xs text-primary font-medium flex items-center gap-2">
             <Lock className="w-3.5 h-3.5 shrink-0" />
             Limited to {maxPerUser} ticket{maxPerUser !== 1 ? "s" : ""} per person for this event.
+          </p>
+        </div>
+      )}
+      {activeTab === "ticket" && tierEnforceLimit && selectedTicketTier && (
+        <div className="mx-4 mt-2 p-3 rounded-xl border border-primary/30 bg-primary/5">
+          <p className="text-xs text-primary font-medium flex items-center gap-2">
+            <Lock className="w-3.5 h-3.5 shrink-0" />
+            {selectedTicketTier.name}: max {tierMaxPerUser} per person.
           </p>
         </div>
       )}
