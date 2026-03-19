@@ -181,12 +181,20 @@ export default function Checkout() {
   let depositAmt = 0;
   let balanceAmt = 0;
 
+  // Tier-level limit
+  const tierEnforceLimit = (selectedTicketTier as any)?.enforce_limit === true;
+  const tierMaxPerUser = tierEnforceLimit ? ((selectedTicketTier as any)?.max_per_user || 4) : Infinity;
+
   if (activeTab === "ticket" && selectedTicketTier) {
     total = Number(selectedTicketTier.price) * quantity;
     available = selectedTicketTier.quantity - selectedTicketTier.sold_count;
-    // Apply per-user ticket limit to available
+    // Apply event-level limit
     if (enforceLimit) {
       available = Math.min(available, maxPerUser);
+    }
+    // Apply tier-level limit (stricter of the two)
+    if (tierEnforceLimit) {
+      available = Math.min(available, tierMaxPerUser);
     }
   } else if (activeTab === "costume" && selectedCostume) {
     total = Number(selectedCostume.price) * quantity;
