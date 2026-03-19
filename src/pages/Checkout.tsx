@@ -286,8 +286,10 @@ export default function Checkout() {
       toast.success("Items reserved! Complete your purchase before the timer expires.");
     } catch (err: any) {
       const msg = err.message || "Failed to reserve inventory";
-      if (msg.includes("maximum number of tickets")) {
+      if (msg.includes("maximum number of tickets allowed for this event")) {
         toast.error("You have reached the maximum number of tickets allowed for this event.");
+      } else if (msg.includes("maximum number of tickets allowed for this tier")) {
+        toast.error("You have reached the maximum number of tickets allowed for this tier.");
       } else {
         toast.error(msg);
       }
