@@ -117,6 +117,10 @@ export default function CreateEvent() {
   const [existingDrafts, setExistingDrafts] = useState<any[]>([]);
   const [recoveryChecked, setRecoveryChecked] = useState(!!editEventId);
 
+  // Lineup & Agenda state
+  const [lineupItems, setLineupItems] = useState<LineupItem[]>([]);
+  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>([]);
+
   // Track original carnival and whether event has purchases (for warning)
   const [originalCarnivalId, setOriginalCarnivalId] = useState<string>("");
   const [hasPurchases, setHasPurchases] = useState(false);
