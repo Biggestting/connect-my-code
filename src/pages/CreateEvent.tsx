@@ -482,7 +482,66 @@ export default function CreateEvent() {
         }
       }
 
-      const statusMsg = isEditMode
+      // Save lineup items
+      if (form.hasLineup) {
+        // Delete removed items
+        if (isEditMode) {
+          const keepIds = lineupItems.filter(l => l.id).map(l => l.id!);
+          if (keepIds.length > 0) {
+            await supabase.from("event_lineup").delete().eq("event_id", eventId).not("id", "in", `(${keepIds.join(",")})`) as any;
+          } else {
+            await supabase.from("event_lineup").delete().eq("event_id", eventId) as any;
+          }
+        }
+        for (let i = 0; i < lineupItems.length; i++) {
+          const item = lineupItems[i];
+          if (item.id) {
+            await supabase.from("event_lineup").update({
+              artist_name: item.artist_name,
+              image_url: item.image_url || null,
+              sort_order: i,
+            } as any).eq("id", item.id);
+          } else {
+            await supabase.from("event_lineup").insert({
+              event_id: eventId,
+              artist_name: item.artist_name,
+              image_url: item.image_url || null,
+              sort_order: i,
+            } as any);
+          }
+        }
+      }
+
+      // Save agenda items
+      if (form.hasAgenda) {
+        if (isEditMode) {
+          const keepIds = agendaItems.filter(a => a.id).map(a => a.id!);
+          if (keepIds.length > 0) {
+            await supabase.from("event_agenda").delete().eq("event_id", eventId).not("id", "in", `(${keepIds.join(",")})`) as any;
+          } else {
+            await supabase.from("event_agenda").delete().eq("event_id", eventId) as any;
+          }
+        }
+        for (let i = 0; i < agendaItems.length; i++) {
+          const item = agendaItems[i];
+          if (item.id) {
+            await supabase.from("event_agenda").update({
+              title: item.title,
+              time: item.time,
+              description: item.description || null,
+              sort_order: i,
+            } as any).eq("id", item.id);
+          } else {
+            await supabase.from("event_agenda").insert({
+              event_id: eventId,
+              title: item.title,
+              time: item.time,
+              description: item.description || null,
+              sort_order: i,
+            } as any);
+          }
+        }
+      }
         ? "Event updated!"
         : publishingStatus === "draft"
         ? "Event saved as draft!"
