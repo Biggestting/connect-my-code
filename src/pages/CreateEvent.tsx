@@ -490,6 +490,9 @@ export default function CreateEvent() {
               quantity: parseInt(tier.quantity) || 0,
               enforce_limit: tier.enforce_limit,
               max_per_user: parseInt(tier.max_per_user) || 4,
+              limit_window_start: tier.limit_window_start || null,
+              limit_window_end: tier.limit_window_end || null,
+              limit_window_max: tier.limit_window_max ? parseInt(tier.limit_window_max) : null,
             } as any).eq("id", tier.id);
           } else {
             // Insert new tier
@@ -500,6 +503,9 @@ export default function CreateEvent() {
               quantity: parseInt(tier.quantity) || 0,
               enforce_limit: tier.enforce_limit,
               max_per_user: parseInt(tier.max_per_user) || 4,
+              limit_window_start: tier.limit_window_start || null,
+              limit_window_end: tier.limit_window_end || null,
+              limit_window_max: tier.limit_window_max ? parseInt(tier.limit_window_max) : null,
             } as any);
           }
         }
