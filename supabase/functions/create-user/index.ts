@@ -171,7 +171,8 @@ Deno.serve(async (req) => {
         createError.message.toLowerCase().includes("email address has already been registered");
 
       if (!duplicateEmail) {
-        return jsonResponse({ error: createError.message }, 400);
+        console.error("User creation error:", createError);
+        return jsonResponse({ error: "Failed to create user account" }, 400);
       }
 
       const existingUser = await findExistingAuthUserByEmail(serviceClient, normalizedEmail);
