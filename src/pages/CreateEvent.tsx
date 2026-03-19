@@ -734,6 +734,39 @@ export default function CreateEvent() {
           <Label>Price ($)</Label>
           <Input type="number" step="0.01" value={form.price} onChange={(e) => handleChange("price", e.target.value)} />
         </div>
+
+        {/* Per-user ticket limit */}
+        <div className="flex items-center justify-between py-2">
+          <div>
+            <Label>Limit tickets per user</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">Restrict how many tickets each user can purchase</p>
+          </div>
+          <Switch
+            checked={form.enforceTicketLimit}
+            onCheckedChange={(v) => handleChange("enforceTicketLimit", v)}
+          />
+        </div>
+        {form.enforceTicketLimit && (
+          <div className="space-y-2 pl-1">
+            <Label>Maximum tickets per user</Label>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={form.maxTicketsPerUser}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 20)) {
+                  handleChange("maxTicketsPerUser", val);
+                }
+              }}
+              placeholder="4"
+            />
+            <p className="text-xs text-muted-foreground">
+              Includes previously purchased and claimed tickets (1–20).
+            </p>
+          </div>
+        )}
         <ImageUploadField
           value={form.imageUrl}
           onChange={(url) => handleChange("imageUrl", url)}
