@@ -127,7 +127,8 @@ Deno.serve(async (req) => {
         });
 
         if (insertErr) {
-          return new Response(JSON.stringify({ error: insertErr.message }), {
+          console.error("Promoter insert error:", insertErr);
+          return new Response(JSON.stringify({ error: "Failed to create promoter" }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
