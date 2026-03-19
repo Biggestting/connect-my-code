@@ -20,23 +20,22 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the caller is an admin
+    // Verify the caller is an admin using getUser
     const anonClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await anonClient.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const adminUserId = claimsData.claims.sub as string;
+    const adminUserId = userData.user.id;
 
     // Check admin role
     const { data: isAdmin } = await anonClient.rpc("has_role", {
