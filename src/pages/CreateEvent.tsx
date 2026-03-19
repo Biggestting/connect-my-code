@@ -1157,6 +1157,15 @@ export default function CreateEvent() {
                     </div>
                   )}
                 </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading || isLockedByOther}
+          className="w-full gradient-primary text-primary-foreground font-semibold rounded-full h-12"
         >
           {loading
             ? "Saving..."
