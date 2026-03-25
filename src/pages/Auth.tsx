@@ -30,10 +30,11 @@ export default function AuthPage() {
       if (provider === "apple") {
         await signInWithApple(window.location.origin);
       } else {
-        const result = await lovable.auth.signInWithOAuth(provider, {
-          redirect_uri: window.location.origin,
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo: window.location.origin },
         });
-        if (result?.error) throw result.error;
+        if (error) throw error;
       }
     } catch (err: any) {
       toast.error(err.message || "OAuth sign-in failed");
