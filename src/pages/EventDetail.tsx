@@ -184,7 +184,7 @@ export default function EventDetail() {
         {/* Organizer Preview */}
         {organizer && (
           <Link to={`/organizers/${organizer.slug}`} className="block px-4 py-4 border-b border-border">
-            <OrganizerPreview organizer={organizer} compact />
+            <OrganizerPreview organizer={organizer} />
           </Link>
         )}
 
