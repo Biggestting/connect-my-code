@@ -308,6 +308,73 @@ export type Database = {
           },
         ]
       }
+      contact_inquiries: {
+        Row: {
+          created_at: string
+          id: string
+          organizer_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organizer_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organizer_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_inquiries_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "organizers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          organizer_id: string
+          sender_id: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          organizer_id: string
+          sender_id: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          organizer_id?: string
+          sender_id?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_requests_organizer_id_fkey"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "organizers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       costume_pickup: {
         Row: {
           id: string
@@ -1035,6 +1102,8 @@ export type Database = {
       organizers: {
         Row: {
           bio: string | null
+          contact_external_url: string | null
+          contact_mode: string
           created_at: string
           default_commission: number | null
           event_types: string[] | null
@@ -1055,6 +1124,8 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          contact_external_url?: string | null
+          contact_mode?: string
           created_at?: string
           default_commission?: number | null
           event_types?: string[] | null
@@ -1075,6 +1146,8 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          contact_external_url?: string | null
+          contact_mode?: string
           created_at?: string
           default_commission?: number | null
           event_types?: string[] | null
@@ -1811,24 +1884,36 @@ export type Database = {
       }
       saved_items: {
         Row: {
+          alert_enabled: boolean
           created_at: string
+          current_price: number | null
+          event_date: string | null
           id: string
           item_id: string
           item_type: string
+          target_price: number | null
           user_id: string
         }
         Insert: {
+          alert_enabled?: boolean
           created_at?: string
+          current_price?: number | null
+          event_date?: string | null
           id?: string
           item_id: string
           item_type?: string
+          target_price?: number | null
           user_id: string
         }
         Update: {
+          alert_enabled?: boolean
           created_at?: string
+          current_price?: number | null
+          event_date?: string | null
           id?: string
           item_id?: string
           item_type?: string
+          target_price?: number | null
           user_id?: string
         }
         Relationships: []
@@ -1937,63 +2022,90 @@ export type Database = {
         Row: {
           claim_code: string | null
           claim_status: string
+          commission_rate: number | null
           created_at: string
           event_id: string
           fulfillment_type: string
           id: string
+          original_price: number | null
+          owner_id: string | null
           owner_user_id: string
           parent_ticket_id: string | null
+          product_kind: string | null
+          promoter_id: string | null
+          purchase_date: string | null
           purchase_id: string | null
+          qr_code_string: string | null
           qr_token: string
           qr_token_expires_at: string
+          referral_code: string | null
           resale_price: number | null
           resale_status: string | null
           scanned_at: string | null
           scanned_by: string | null
           status: string
           ticket_tier_id: string | null
+          ticket_type: string | null
           transfer_history: Json
           updated_at: string
         }
         Insert: {
           claim_code?: string | null
           claim_status?: string
+          commission_rate?: number | null
           created_at?: string
           event_id: string
           fulfillment_type?: string
           id?: string
+          original_price?: number | null
+          owner_id?: string | null
           owner_user_id: string
           parent_ticket_id?: string | null
+          product_kind?: string | null
+          promoter_id?: string | null
+          purchase_date?: string | null
           purchase_id?: string | null
+          qr_code_string?: string | null
           qr_token?: string
           qr_token_expires_at?: string
+          referral_code?: string | null
           resale_price?: number | null
           resale_status?: string | null
           scanned_at?: string | null
           scanned_by?: string | null
           status?: string
           ticket_tier_id?: string | null
+          ticket_type?: string | null
           transfer_history?: Json
           updated_at?: string
         }
         Update: {
           claim_code?: string | null
           claim_status?: string
+          commission_rate?: number | null
           created_at?: string
           event_id?: string
           fulfillment_type?: string
           id?: string
+          original_price?: number | null
+          owner_id?: string | null
           owner_user_id?: string
           parent_ticket_id?: string | null
+          product_kind?: string | null
+          promoter_id?: string | null
+          purchase_date?: string | null
           purchase_id?: string | null
+          qr_code_string?: string | null
           qr_token?: string
           qr_token_expires_at?: string
+          referral_code?: string | null
           resale_price?: number | null
           resale_status?: string | null
           scanned_at?: string | null
           scanned_by?: string | null
           status?: string
           ticket_tier_id?: string | null
+          ticket_type?: string | null
           transfer_history?: Json
           updated_at?: string
         }
