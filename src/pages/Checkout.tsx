@@ -5,7 +5,7 @@ import { useEvent } from "@/hooks/use-events";
 import { useProductAddons, useJouvertCustomizationFields, useCustomizationFields } from "@/hooks/use-products";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ArrowLeft, Minus, Plus, Tag, Shirt, PartyPopper, Ticket, MapPin, ShieldAlert, Ruler, CheckCircle2, ListChecks, Lock } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Tag, Shirt, PartyPopper, Ticket, MapPin, ShieldAlert, Ruler, CheckCircle2, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -114,7 +114,7 @@ export default function Checkout() {
         </div>
         <QueueWaitingRoom
           position={queueEntry?.position || waitingCount + 1}
-          waitingCount={waitingCount}
+          totalWaiting={waitingCount}
           isWaiting={isWaiting}
           onJoinQueue={() => joinQueue.mutate()}
           isJoining={joinQueue.isPending}
@@ -124,16 +124,14 @@ export default function Checkout() {
     );
   }
 
+
+
   const tiers = event.ticket_tiers || [];
   const bands = (event.bands || []) as BandWithSections[];
   const jouvertPackages = (event.jouvert_packages || []) as JouvertPackage[];
 
   const hasCostumes = bands.some((b) => b.band_sections?.some((s) => s.costume_products?.length > 0));
   const hasJouvert = jouvertPackages.length > 0;
-
-  // Per-user ticket limit
-  const enforceLimit = (event as any).enforce_ticket_limit === true;
-  const maxPerUser = enforceLimit ? (event.max_tickets_per_user || 4) : Infinity;
 
   // Addon query for selected product
   const addonJouvertId = activeTab === "jouvert" ? selectedPackage || undefined : undefined;
@@ -181,31 +179,9 @@ export default function Checkout() {
   let depositAmt = 0;
   let balanceAmt = 0;
 
-  // Tier-level limit
-  const tierEnforceLimit = (selectedTicketTier as any)?.enforce_limit === true;
-  const tierMaxPerUser = tierEnforceLimit ? ((selectedTicketTier as any)?.max_per_user || 4) : Infinity;
-
-  // Time-window limit
-  const tierWindowStart = (selectedTicketTier as any)?.limit_window_start;
-  const tierWindowEnd = (selectedTicketTier as any)?.limit_window_end;
-  const tierWindowMax = (selectedTicketTier as any)?.limit_window_max;
-  const nowMs = Date.now();
-  const isInWindow = tierWindowStart && tierWindowEnd && tierWindowMax
-    && nowMs >= new Date(tierWindowStart).getTime()
-    && nowMs < new Date(tierWindowEnd).getTime();
-  const activeMaxPerTier = isInWindow ? tierWindowMax : (tierEnforceLimit ? tierMaxPerUser : Infinity);
-
   if (activeTab === "ticket" && selectedTicketTier) {
     total = Number(selectedTicketTier.price) * quantity;
     available = selectedTicketTier.quantity - selectedTicketTier.sold_count;
-    // Apply event-level limit
-    if (enforceLimit) {
-      available = Math.min(available, maxPerUser);
-    }
-    // Apply active tier limit (time-window or standard)
-    if (activeMaxPerTier !== Infinity) {
-      available = Math.min(available, activeMaxPerTier);
-    }
   } else if (activeTab === "costume" && selectedCostume) {
     total = Number(selectedCostume.price) * quantity;
     available = selectedCostume.inventory_quantity - selectedCostume.inventory_sold;
@@ -232,21 +208,12 @@ export default function Checkout() {
   // Call checkout-guard edge function
   const runCheckoutGuard = async (): Promise<boolean> => {
     try {
-      // Simple device fingerprint from available browser signals
-      const deviceFingerprint = [
-        navigator.userAgent,
-        navigator.language,
-        screen.width + "x" + screen.height,
-        Intl.DateTimeFormat().resolvedOptions().timeZone,
-      ].join("|");
-
       const { data, error } = await supabase.functions.invoke("checkout-guard", {
         body: {
           eventId: event.id,
           quantity,
           productType: activeTab,
           turnstileToken: turnstileToken || undefined,
-          deviceFingerprint,
         },
       });
 
@@ -255,6 +222,7 @@ export default function Checkout() {
         return false;
       }
 
+      // Store IP for the purchase record
       if (data?.ip) setGuardIp(data.ip);
 
       if (data?.blocked) {
@@ -304,20 +272,13 @@ export default function Checkout() {
       });
       toast.success("Items reserved! Complete your purchase before the timer expires.");
     } catch (err: any) {
-      const msg = err.message || "Failed to reserve inventory";
-      if (msg.includes("maximum number of tickets allowed for this event")) {
-        toast.error("You have reached the maximum number of tickets allowed for this event.");
-      } else if (msg.includes("maximum number of tickets allowed for this tier")) {
-        toast.error("You have reached the maximum number of tickets allowed for this tier.");
-      } else if (msg.includes("time-limited maximum")) {
-        toast.error("You have reached the time-limited maximum for this ticket tier.");
-      } else {
-        toast.error(msg);
-      }
+      toast.error(err.message || "Failed to reserve inventory");
     } finally {
       setReserving(false);
     }
   };
+
+
 
   const handlePurchase = async () => {
     if (!canPurchase || !termsAccepted) return;
@@ -406,6 +367,7 @@ export default function Checkout() {
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <h1 className="text-lg font-bold text-foreground flex-1">Checkout</h1>
+        {/* Reservation timer in header */}
         {hasReservation && timeLeft !== null && (
           <ReservationTimer timeLeft={timeLeft} />
         )}
@@ -439,24 +401,6 @@ export default function Checkout() {
             <span className="text-muted-foreground ml-1">({promoter.promo_code})</span>
           </p>
           <button onClick={clearPromoCode} className="text-xs text-muted-foreground hover:text-foreground">Remove</button>
-        </div>
-      )}
-
-      {/* Ticket limit notices */}
-      {activeTab === "ticket" && enforceLimit && (
-        <div className="mx-4 mt-4 p-3 rounded-xl border border-primary/30 bg-primary/5">
-          <p className="text-xs text-primary font-medium flex items-center gap-2">
-            <Lock className="w-3.5 h-3.5 shrink-0" />
-            Limited to {maxPerUser} ticket{maxPerUser !== 1 ? "s" : ""} per person for this event.
-          </p>
-        </div>
-      )}
-      {activeTab === "ticket" && selectedTicketTier && activeMaxPerTier !== Infinity && (
-        <div className="mx-4 mt-2 p-3 rounded-xl border border-primary/30 bg-primary/5">
-          <p className="text-xs text-primary font-medium flex items-center gap-2">
-            <Lock className="w-3.5 h-3.5 shrink-0" />
-            {selectedTicketTier.name}: max {activeMaxPerTier} per person{isInWindow ? " (time-limited)" : ""}.
-          </p>
         </div>
       )}
 
@@ -941,6 +885,11 @@ export default function Checkout() {
                 onVerify={(token) => {
                   setTurnstileToken(token);
                   setShowCaptcha(false);
+                }}
+                onError={() => toast.error("Verification failed. Please try again.")}
+                onExpire={() => {
+                  setTurnstileToken(null);
+                  setShowCaptcha(true);
                 }}
               />
             )}

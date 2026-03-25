@@ -15,6 +15,8 @@ export type Profile = Tables<"profiles">;
 export type Purchase = Tables<"purchases">;
 export type MarketplaceListing = Tables<"marketplace_listings">;
 
+// ─── Band → Section → Costume hierarchy ───
+
 export interface Band {
   id: string;
   organizer_id: string;
@@ -131,6 +133,7 @@ export interface AddonSizeOption {
 
 export type ProductType = "ticket" | "costume" | "jouvert";
 
+// Nested band structure for display
 export type SectionVersionWithFields = SectionVersion & {
   customization_fields?: CustomizationField[];
 };

@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Fetch ticket and verify ownership
     const { data: ticket, error: fetchErr } = await adminClient
       .from("tickets")
       .select("*")
@@ -82,6 +83,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Build update payload
     const updatePayload: Record<string, unknown> = {
       resale_status,
       updated_at: new Date().toISOString(),
@@ -97,6 +99,7 @@ Deno.serve(async (req) => {
       updatePayload.resale_price = resale_price;
     }
 
+    // Clear price when delisting
     if (resale_status === "not_listed" || resale_status === "delisted") {
       updatePayload.resale_price = null;
     }
@@ -114,7 +117,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, ticket: updated }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
+  } catch (err) {
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
