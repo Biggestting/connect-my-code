@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Look up ticket by QR token
     const { data: ticket, error: fetchErr } = await adminClient
       .from("tickets")
       .select("*, events(title, date, venue, organizer_id), ticket_tiers(name)")
@@ -39,13 +40,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (new Date(ticket.qr_token_expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({ valid: false, reason: "QR code expired — ask the attendee to refresh their ticket" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Reject voided tickets
     if (ticket.status === "void") {
       return new Response(
         JSON.stringify({ valid: false, reason: "Ticket has been voided" }),
@@ -53,6 +48,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Check if already redeemed/used
     if (ticket.status === "used" || ticket.status === "redeemed") {
       return new Response(
         JSON.stringify({
@@ -64,6 +60,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Must have an owner (unclaimed physical tickets can't enter)
     if (!ticket.owner_user_id) {
       return new Response(
         JSON.stringify({ valid: false, reason: "Ticket not yet claimed — no verified owner" }),
@@ -71,6 +68,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Only valid/claimed tickets can be scanned
     if (ticket.status !== "valid") {
       return new Response(
         JSON.stringify({ valid: false, reason: `Ticket status: ${ticket.status}` }),
@@ -78,6 +76,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Mark as used/redeemed
     const { error: updateErr } = await adminClient
       .from("tickets")
       .update({
@@ -101,7 +100,7 @@ Deno.serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
+  } catch (err) {
     return new Response(
       JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
