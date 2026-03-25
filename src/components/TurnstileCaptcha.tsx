@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 // Public site key — replace with your Cloudflare Turnstile site key
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || "";
 
-interface TurnstileCaptchaProps {
+export interface TurnstileCaptchaProps {
   onVerify: (token: string) => void;
   onError?: () => void;
   onExpire?: () => void;

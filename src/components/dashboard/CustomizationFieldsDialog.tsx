@@ -98,7 +98,7 @@ function FieldsManager({ productId, jouvertPackageId, sectionVersionId }: { prod
 
   const handleDelete = async (field: CustomizationField) => {
     try {
-      await deleteMutation.mutateAsync({ id: field.id });
+      await deleteMutation.mutateAsync(field.id);
       toast.success("Field removed");
     } catch (err: any) {
       toast.error(err.message || "Failed to delete field");
@@ -134,7 +134,7 @@ function FieldsManager({ productId, jouvertPackageId, sectionVersionId }: { prod
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 shrink-0"
-                onClick={() => handleDelete(field)}
+                onClick={() => handleDelete(field as CustomizationField)}
                 disabled={deleteMutation.isPending}
               >
                 <Trash2 className="w-3 h-3 text-destructive" />

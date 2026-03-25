@@ -328,7 +328,7 @@ export default function CreateEvent() {
     setSnapshot,
     flush,
   } = useAutosave({
-    onSave: handleAutosave,
+    onSave: async (changedFields) => { await handleAutosave(changedFields); },
     data: form,
     enabled: !!organizer?.id && !loading,
     debounceMs: 4000,
