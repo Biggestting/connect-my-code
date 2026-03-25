@@ -98,7 +98,7 @@ function FieldsManager({ productId, jouvertPackageId, sectionVersionId }: { prod
 
   const handleDelete = async (field: CustomizationField) => {
     try {
-      await deleteMutation.mutateAsync({ id: field.id });
+      await deleteMutation.mutateAsync(field.id);
       toast.success("Field removed");
     } catch (err: any) {
       toast.error(err.message || "Failed to delete field");
