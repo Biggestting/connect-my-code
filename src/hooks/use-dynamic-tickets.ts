@@ -19,7 +19,6 @@ export interface Ticket {
   qr_token_expires_at: string;
   scanned_at: string | null;
   scanned_by: string | null;
-  parent_ticket_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +55,11 @@ export function useMyTickets() {
   });
 }
 
+/**
+ * Hook that provides a static single-use QR token for a ticket.
+ * Token is created once at purchase and only changes on resale transfer.
+ * Security comes from single-use scan, not rotation.
+ */
 export function useTicketQR(ticketId: string | null) {
   const [qrData, setQrData] = useState<{ token: string; expiresAt: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -75,19 +79,11 @@ export function useTicketQR(ticketId: string | null) {
         });
       }
     } catch (err) {
-      console.error("Failed to rotate QR:", err);
+      console.error("Failed to load QR:", err);
     } finally {
       setLoading(false);
     }
   }, [ticketId]);
-
-  useEffect(() => {
-    if (!qrData?.expiresAt) return;
-    const expiresMs = new Date(qrData.expiresAt).getTime() - Date.now();
-    const timeout = Math.max(expiresMs - 30000, 5000);
-    const timer = setTimeout(refresh, timeout);
-    return () => clearTimeout(timer);
-  }, [qrData?.expiresAt, refresh]);
 
   return { qrData, loading, refresh };
 }

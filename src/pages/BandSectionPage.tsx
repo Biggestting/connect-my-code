@@ -50,7 +50,7 @@ export default function BandSectionPage() {
     s === "1-piece" ? "One Piece" : s === "2-piece" ? "Two Piece" : s === "board-shorts" ? "Board Shorts" : s;
 
   return (
-    <div className="pb-28 md:pb-24 max-w-3xl mx-auto">
+    <div className="pb-28 md:pb-24 max-w-7xl mx-auto w-full">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
         <Link
