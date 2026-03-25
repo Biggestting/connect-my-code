@@ -886,7 +886,7 @@ export default function Checkout() {
                   setTurnstileToken(token);
                   setShowCaptcha(false);
                 }}
-                onError={() => toast.error("Verification failed. Please try again.")}
+                onError={() => { toast.error("Verification failed. Please try again."); }}
                 onExpire={() => {
                   setTurnstileToken(null);
                   setShowCaptcha(true);
