@@ -30,7 +30,6 @@ export function QueueWaitingRoom({
     return () => clearInterval(interval);
   }, [isWaiting]);
 
-  // Estimate wait based on batch releases every ~30s
   const estimatedMinutes = Math.max(1, Math.ceil(position / 20) * 0.5);
   const progressPercent = totalWaiting > 0 ? Math.max(5, ((totalWaiting - position + 1) / totalWaiting) * 100) : 5;
 
@@ -64,7 +63,6 @@ export function QueueWaitingRoom({
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-      {/* Animated pulse ring */}
       <div className="relative mb-8">
         <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
           <Zap className="w-10 h-10 text-primary" />
@@ -77,7 +75,6 @@ export function QueueWaitingRoom({
         Stay on this page. You'll be automatically admitted to checkout when it's your turn.
       </p>
 
-      {/* Position card */}
       <div className="w-full max-w-xs rounded-2xl border border-border bg-muted/30 p-5 space-y-4">
         <div className="text-center">
           <p className="text-4xl font-bold text-primary tabular-nums">#{position}</p>
