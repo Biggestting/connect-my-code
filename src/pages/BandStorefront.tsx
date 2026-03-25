@@ -84,7 +84,7 @@ export default function BandStorefront() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-7xl mx-auto w-full">
         {/* Tabs */}
         <div className="flex border-b border-border">
           {(["about", "costumes"] as const).map((tab) => (

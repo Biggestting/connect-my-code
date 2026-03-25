@@ -52,7 +52,7 @@ export default function OrganizerProfile() {
   const pastEvents = events?.filter((e) => new Date(e.date) < new Date()) || [];
 
   return (
-    <div className="pb-20 md:pb-8 max-w-3xl mx-auto">
+    <div className="pb-20 md:pb-8 max-w-7xl mx-auto w-full">
       {/* Header */}
       <section className="px-4 py-6">
         <div className="flex items-center gap-4 mb-4">

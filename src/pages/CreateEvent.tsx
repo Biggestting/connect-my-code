@@ -4,8 +4,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { useOrganizerByUserId } from "@/hooks/use-organizer";
 import { useCarnivals } from "@/hooks/use-carnivals";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Lock, MapPin, Plus, Trash2, AlertTriangle, GripVertical } from "lucide-react";
+import { ArrowLeft, Lock, MapPin, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,19 +26,6 @@ import { ImageUploadField } from "@/components/ImageUploadField";
 
 type PublishOption = "draft" | "publish" | "schedule";
 
-interface LineupItem {
-  id?: string;
-  artist_name: string;
-  image_url: string;
-}
-
-interface AgendaItem {
-  id?: string;
-  title: string;
-  time: string;
-  description: string;
-}
-
 interface EventFormState {
   title: string;
   description: string;
@@ -54,8 +43,6 @@ interface EventFormState {
   hasAgenda: boolean;
   carnivalId: string;
   carnivalYear: string;
-  enforceTicketLimit: boolean;
-  maxTicketsPerUser: string;
 }
 
 const INITIAL_FORM: EventFormState = {
@@ -75,8 +62,6 @@ const INITIAL_FORM: EventFormState = {
   hasAgenda: false,
   carnivalId: "",
   carnivalYear: "",
-  enforceTicketLimit: false,
-  maxTicketsPerUser: "4",
 };
 
 const FORM_TO_DB: Record<string, string> = {
@@ -93,8 +78,6 @@ const FORM_TO_DB: Record<string, string> = {
   hasAgenda: "has_agenda",
   carnivalId: "carnival_id",
   carnivalYear: "carnival_year",
-  enforceTicketLimit: "enforce_ticket_limit",
-  maxTicketsPerUser: "max_tickets_per_user",
 };
 
 export default function CreateEvent() {
@@ -115,17 +98,13 @@ export default function CreateEvent() {
   const [form, setForm] = useState<EventFormState>(INITIAL_FORM);
 
   // Ticket tiers state (for edit mode)
-  const [ticketTiers, setTicketTiers] = useState<{ id?: string; name: string; price: string; quantity: string; enforce_limit: boolean; max_per_user: string; limit_window_start: string; limit_window_end: string; limit_window_max: string }[]>([]);
+  const [ticketTiers, setTicketTiers] = useState<{ id?: string; name: string; price: string; quantity: string }[]>([]);
   const [tiersLoaded, setTiersLoaded] = useState(false);
 
   // Draft recovery state
   const [showRecovery, setShowRecovery] = useState(false);
   const [existingDrafts, setExistingDrafts] = useState<any[]>([]);
   const [recoveryChecked, setRecoveryChecked] = useState(!!editEventId);
-
-  // Lineup & Agenda state
-  const [lineupItems, setLineupItems] = useState<LineupItem[]>([]);
-  const [agendaItems, setAgendaItems] = useState<AgendaItem[]>([]);
 
   // Track original carnival and whether event has purchases (for warning)
   const [originalCarnivalId, setOriginalCarnivalId] = useState<string>("");
@@ -159,8 +138,6 @@ export default function CreateEvent() {
           hasAgenda: data.has_agenda || false,
           carnivalId: data.carnival_id || "",
           carnivalYear: data.carnival_year ? String(data.carnival_year) : "",
-          enforceTicketLimit: data.enforce_ticket_limit || false,
-          maxTicketsPerUser: data.max_tickets_per_user ? String(data.max_tickets_per_user) : "4",
         };
         setForm(loaded);
         setOriginalCarnivalId(data.carnival_id || "");
@@ -204,43 +181,8 @@ export default function CreateEvent() {
           name: t.name,
           price: String(t.price),
           quantity: String(t.quantity),
-          enforce_limit: t.enforce_limit || false,
-          max_per_user: String(t.max_per_user || 4),
-          limit_window_start: t.limit_window_start || "",
-          limit_window_end: t.limit_window_end || "",
-          limit_window_max: t.limit_window_max ? String(t.limit_window_max) : "",
         })));
       }
-
-      // Load lineup items
-      const { data: lineupData } = await supabase
-        .from("event_lineup")
-        .select("*")
-        .eq("event_id", editEventId)
-        .order("sort_order", { ascending: true });
-      if (lineupData) {
-        setLineupItems(lineupData.map((l: any) => ({
-          id: l.id,
-          artist_name: l.artist_name,
-          image_url: l.image_url || "",
-        })));
-      }
-
-      // Load agenda items
-      const { data: agendaData } = await supabase
-        .from("event_agenda")
-        .select("*")
-        .eq("event_id", editEventId)
-        .order("sort_order", { ascending: true });
-      if (agendaData) {
-        setAgendaItems(agendaData.map((a: any) => ({
-          id: a.id,
-          title: a.title,
-          time: a.time,
-          description: a.description || "",
-        })));
-      }
-
       setTiersLoaded(true);
     };
     loadEvent();
@@ -294,8 +236,6 @@ export default function CreateEvent() {
         hasAgenda: data.has_agenda || false,
         carnivalId: data.carnival_id || "",
         carnivalYear: data.carnival_year ? String(data.carnival_year) : "",
-        enforceTicketLimit: data.enforce_ticket_limit || false,
-        maxTicketsPerUser: data.max_tickets_per_user ? String(data.max_tickets_per_user) : "4",
       };
       setForm(loaded);
 
@@ -338,8 +278,6 @@ export default function CreateEvent() {
           dbPayload[dbKey] = val ? parseInt(val) : null;
         } else if (formKey === "state") {
           dbPayload[dbKey] = val || null;
-        } else if (formKey === "maxTicketsPerUser") {
-          dbPayload[dbKey] = val ? Math.max(1, Math.min(20, parseInt(val) || 4)) : 4;
         } else {
           dbPayload[dbKey] = val;
         }
@@ -390,7 +328,7 @@ export default function CreateEvent() {
     setSnapshot,
     flush,
   } = useAutosave({
-    onSave: handleAutosave as any,
+    onSave: handleAutosave,
     data: form,
     enabled: !!organizer?.id && !loading,
     debounceMs: 4000,
@@ -456,8 +394,6 @@ export default function CreateEvent() {
       sales_status: "on_sale",
       carnival_id: form.carnivalId || null,
       carnival_year: form.carnivalYear ? parseInt(form.carnivalYear) : null,
-      enforce_ticket_limit: form.enforceTicketLimit,
-      max_tickets_per_user: form.enforceTicketLimit ? Math.max(1, Math.min(20, parseInt(form.maxTicketsPerUser) || 4)) : 4,
       publishing_status: publishingStatus,
       publish_at: publishOption === "schedule" ? new Date(publishAt).toISOString() : null,
       ticket_sales_start_at: ticketSalesOption === "schedule" ? new Date(ticketSalesStartAt).toISOString() : null,
@@ -488,11 +424,6 @@ export default function CreateEvent() {
               name: tier.name,
               price: parseFloat(tier.price) || 0,
               quantity: parseInt(tier.quantity) || 0,
-              enforce_limit: tier.enforce_limit,
-              max_per_user: parseInt(tier.max_per_user) || 4,
-              limit_window_start: tier.limit_window_start || null,
-              limit_window_end: tier.limit_window_end || null,
-              limit_window_max: tier.limit_window_max ? parseInt(tier.limit_window_max) : null,
             } as any).eq("id", tier.id);
           } else {
             // Insert new tier
@@ -501,76 +432,11 @@ export default function CreateEvent() {
               name: tier.name,
               price: parseFloat(tier.price) || 0,
               quantity: parseInt(tier.quantity) || 0,
-              enforce_limit: tier.enforce_limit,
-              max_per_user: parseInt(tier.max_per_user) || 4,
-              limit_window_start: tier.limit_window_start || null,
-              limit_window_end: tier.limit_window_end || null,
-              limit_window_max: tier.limit_window_max ? parseInt(tier.limit_window_max) : null,
             } as any);
           }
         }
       }
 
-      // Save lineup items
-      if (form.hasLineup) {
-        // Delete removed items
-        if (isEditMode) {
-          const keepIds = lineupItems.filter(l => l.id).map(l => l.id!);
-          if (keepIds.length > 0) {
-            await supabase.from("event_lineup").delete().eq("event_id", eventId).not("id", "in", `(${keepIds.join(",")})`) as any;
-          } else {
-            await supabase.from("event_lineup").delete().eq("event_id", eventId) as any;
-          }
-        }
-        for (let i = 0; i < lineupItems.length; i++) {
-          const item = lineupItems[i];
-          if (item.id) {
-            await supabase.from("event_lineup").update({
-              artist_name: item.artist_name,
-              image_url: item.image_url || null,
-              sort_order: i,
-            } as any).eq("id", item.id);
-          } else {
-            await supabase.from("event_lineup").insert({
-              event_id: eventId,
-              artist_name: item.artist_name,
-              image_url: item.image_url || null,
-              sort_order: i,
-            } as any);
-          }
-        }
-      }
-
-      // Save agenda items
-      if (form.hasAgenda) {
-        if (isEditMode) {
-          const keepIds = agendaItems.filter(a => a.id).map(a => a.id!);
-          if (keepIds.length > 0) {
-            await supabase.from("event_agenda").delete().eq("event_id", eventId).not("id", "in", `(${keepIds.join(",")})`) as any;
-          } else {
-            await supabase.from("event_agenda").delete().eq("event_id", eventId) as any;
-          }
-        }
-        for (let i = 0; i < agendaItems.length; i++) {
-          const item = agendaItems[i];
-          if (item.id) {
-            await supabase.from("event_agenda").update({
-              title: item.title,
-              time: item.time,
-              description: item.description || null,
-              sort_order: i,
-            } as any).eq("id", item.id);
-          } else {
-            await supabase.from("event_agenda").insert({
-              event_id: eventId,
-              title: item.title,
-              time: item.time,
-              description: item.description || null,
-              sort_order: i,
-            } as any);
-          }
-        }
-      }
       const statusMsg = isEditMode
         ? "Event updated!"
         : publishingStatus === "draft"
@@ -599,7 +465,7 @@ export default function CreateEvent() {
   }
 
   return (
-    <div className="pb-20 md:pb-8 max-w-lg mx-auto">
+    <div className="pb-20 md:pb-8 max-w-4xl mx-auto w-full">
       {/* Draft Recovery Dialog */}
       <DraftRecoveryDialog
         open={showRecovery}
@@ -708,10 +574,14 @@ export default function CreateEvent() {
             <Input type="datetime-local" value={form.endDate} onChange={(e) => handleChange("endDate", e.target.value)} />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="space-y-2">
             <Label>City *</Label>
             <Input value={form.city} onChange={(e) => handleChange("city", e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>State</Label>
+            <Input value={form.state} onChange={(e) => handleChange("state", e.target.value)} placeholder="e.g. FL, NY" />
           </div>
           <div className="space-y-2">
             <Label>Country *</Label>
@@ -749,39 +619,6 @@ export default function CreateEvent() {
           <Label>Price ($)</Label>
           <Input type="number" step="0.01" value={form.price} onChange={(e) => handleChange("price", e.target.value)} />
         </div>
-
-        {/* Per-user ticket limit */}
-        <div className="flex items-center justify-between py-2">
-          <div>
-            <Label>Limit tickets per user</Label>
-            <p className="text-xs text-muted-foreground mt-0.5">Restrict how many tickets each user can purchase</p>
-          </div>
-          <Switch
-            checked={form.enforceTicketLimit}
-            onCheckedChange={(v) => handleChange("enforceTicketLimit", v)}
-          />
-        </div>
-        {form.enforceTicketLimit && (
-          <div className="space-y-2 pl-1">
-            <Label>Maximum tickets per user</Label>
-            <Input
-              type="number"
-              min={1}
-              max={20}
-              value={form.maxTicketsPerUser}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 20)) {
-                  handleChange("maxTicketsPerUser", val);
-                }
-              }}
-              placeholder="4"
-            />
-            <p className="text-xs text-muted-foreground">
-              Includes previously purchased and claimed tickets (1–20).
-            </p>
-          </div>
-        )}
         <ImageUploadField
           value={form.imageUrl}
           onChange={(url) => handleChange("imageUrl", url)}
@@ -801,140 +638,6 @@ export default function CreateEvent() {
           <Label>Has Agenda</Label>
           <Switch checked={form.hasAgenda} onCheckedChange={(v) => handleChange("hasAgenda", v)} />
         </div>
-
-        {/* Lineup Section */}
-        {form.hasLineup && (
-          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30">
-            <div className="flex items-center justify-between">
-              <Label className="text-foreground font-semibold">Lineup</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-full gap-1 h-7 text-xs"
-                onClick={() => setLineupItems((prev) => [...prev, { artist_name: "", image_url: "" }])}
-              >
-                <Plus className="w-3 h-3" /> Add Artist
-              </Button>
-            </div>
-            {lineupItems.length === 0 && (
-              <p className="text-xs text-muted-foreground">Add artists performing at this event.</p>
-            )}
-            <div className="space-y-2">
-              {lineupItems.map((item, i) => (
-                <div key={item.id || `lineup-${i}`} className="flex gap-2 items-end">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs">Artist Name</Label>
-                    <Input
-                      value={item.artist_name}
-                      onChange={(e) => {
-                        const updated = [...lineupItems];
-                        updated[i] = { ...updated[i], artist_name: e.target.value };
-                        setLineupItems(updated);
-                      }}
-                      placeholder="e.g. Machel Montano"
-                    />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs">Image URL</Label>
-                    <Input
-                      value={item.image_url}
-                      onChange={(e) => {
-                        const updated = [...lineupItems];
-                        updated[i] = { ...updated[i], image_url: e.target.value };
-                        setLineupItems(updated);
-                      }}
-                      placeholder="Optional"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
-                    onClick={() => setLineupItems((prev) => prev.filter((_, j) => j !== i))}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Agenda Section */}
-        {form.hasAgenda && (
-          <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30">
-            <div className="flex items-center justify-between">
-              <Label className="text-foreground font-semibold">Agenda</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-full gap-1 h-7 text-xs"
-                onClick={() => setAgendaItems((prev) => [...prev, { title: "", time: "", description: "" }])}
-              >
-                <Plus className="w-3 h-3" /> Add Item
-              </Button>
-            </div>
-            {agendaItems.length === 0 && (
-              <p className="text-xs text-muted-foreground">Add schedule items for this event.</p>
-            )}
-            <div className="space-y-3">
-              {agendaItems.map((item, i) => (
-                <div key={item.id || `agenda-${i}`} className="space-y-2 p-3 rounded-lg border border-border/50 bg-background">
-                  <div className="flex gap-2 items-end">
-                    <div className="w-28 space-y-1">
-                      <Label className="text-xs">Time</Label>
-                      <Input
-                        value={item.time}
-                        onChange={(e) => {
-                          const updated = [...agendaItems];
-                          updated[i] = { ...updated[i], time: e.target.value };
-                          setAgendaItems(updated);
-                        }}
-                        placeholder="e.g. 8:00 PM"
-                      />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <Label className="text-xs">Title</Label>
-                      <Input
-                        value={item.title}
-                        onChange={(e) => {
-                          const updated = [...agendaItems];
-                          updated[i] = { ...updated[i], title: e.target.value };
-                          setAgendaItems(updated);
-                        }}
-                        placeholder="e.g. Doors Open"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
-                      onClick={() => setAgendaItems((prev) => prev.filter((_, j) => j !== i))}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Description (optional)</Label>
-                    <Input
-                      value={item.description}
-                      onChange={(e) => {
-                        const updated = [...agendaItems];
-                        updated[i] = { ...updated[i], description: e.target.value };
-                        setAgendaItems(updated);
-                      }}
-                      placeholder="Brief description"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Publish Options */}
         <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/30">
@@ -994,7 +697,7 @@ export default function CreateEvent() {
               variant="outline"
               size="sm"
               className="rounded-full gap-1 h-7 text-xs"
-              onClick={() => setTicketTiers((prev) => [...prev, { name: "", price: "0", quantity: "100", enforce_limit: false, max_per_user: "4", limit_window_start: "", limit_window_end: "", limit_window_max: "" }])}
+              onClick={() => setTicketTiers((prev) => [...prev, { name: "", price: "0", quantity: "100" }])}
             >
               <Plus className="w-3 h-3" /> Add Tier
             </Button>
@@ -1005,157 +708,59 @@ export default function CreateEvent() {
           {ticketTiers.length > 0 && (
             <div className="space-y-3">
               {ticketTiers.map((tier, i) => (
-                <div key={tier.id || `new-${i}`} className="space-y-2 p-3 rounded-xl border border-border">
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1 space-y-1">
-                      <Label className="text-xs">Name</Label>
-                      <Input
-                        value={tier.name}
-                        onChange={(e) => {
-                          const updated = [...ticketTiers];
-                          updated[i] = { ...updated[i], name: e.target.value };
-                          setTicketTiers(updated);
-                        }}
-                        placeholder="e.g. General, VIP"
-                      />
-                    </div>
-                    <div className="w-24 space-y-1">
-                      <Label className="text-xs">Price ($)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={tier.price}
-                        onChange={(e) => {
-                          const updated = [...ticketTiers];
-                          updated[i] = { ...updated[i], price: e.target.value };
-                          setTicketTiers(updated);
-                        }}
-                      />
-                    </div>
-                    <div className="w-24 space-y-1">
-                      <Label className="text-xs">Qty</Label>
-                      <Input
-                        type="number"
-                        value={tier.quantity}
-                        onChange={(e) => {
-                          const updated = [...ticketTiers];
-                          updated[i] = { ...updated[i], quantity: e.target.value };
-                          setTicketTiers(updated);
-                        }}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
-                      onClick={async () => {
-                        if (tier.id) {
-                          await supabase.from("ticket_tiers").delete().eq("id", tier.id);
-                          toast.success("Tier deleted");
-                        }
-                        setTicketTiers((prev) => prev.filter((_, j) => j !== i));
+                <div key={tier.id || `new-${i}`} className="flex gap-2 items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Name</Label>
+                    <Input
+                      value={tier.name}
+                      onChange={(e) => {
+                        const updated = [...ticketTiers];
+                        updated[i] = { ...updated[i], name: e.target.value };
+                        setTicketTiers(updated);
                       }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      placeholder="e.g. General, VIP"
+                    />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={tier.enforce_limit}
-                        onCheckedChange={(checked) => {
-                          const updated = [...ticketTiers];
-                          updated[i] = { ...updated[i], enforce_limit: checked };
-                          setTicketTiers(updated);
-                        }}
-                      />
-                      <Label className="text-xs text-muted-foreground">Limit per user</Label>
-                    </div>
-                    {tier.enforce_limit && (
-                      <div className="flex items-center gap-1.5">
-                        <Label className="text-xs text-muted-foreground">Max</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={20}
-                          value={tier.max_per_user}
-                          onChange={(e) => {
-                            const val = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
-                            const updated = [...ticketTiers];
-                            updated[i] = { ...updated[i], max_per_user: String(val) };
-                            setTicketTiers(updated);
-                          }}
-                          className="w-16 h-7 text-xs"
-                        />
-                      </div>
-                    )}
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs">Price ($)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={tier.price}
+                      onChange={(e) => {
+                        const updated = [...ticketTiers];
+                        updated[i] = { ...updated[i], price: e.target.value };
+                        setTicketTiers(updated);
+                      }}
+                    />
                   </div>
-                  {tier.enforce_limit && (
-                    <div className="space-y-2 pt-1">
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={!!tier.limit_window_start}
-                          onCheckedChange={(checked) => {
-                            const updated = [...ticketTiers];
-                            if (checked) {
-                              updated[i] = { ...updated[i], limit_window_start: new Date().toISOString().slice(0, 16), limit_window_end: "", limit_window_max: "" };
-                            } else {
-                              updated[i] = { ...updated[i], limit_window_start: "", limit_window_end: "", limit_window_max: "" };
-                            }
-                            setTicketTiers(updated);
-                          }}
-                        />
-                        <Label className="text-xs text-muted-foreground">Time-window limit</Label>
-                      </div>
-                      {tier.limit_window_start && (
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground">Window Start (UTC)</Label>
-                            <Input
-                              type="datetime-local"
-                              value={tier.limit_window_start ? tier.limit_window_start.slice(0, 16) : ""}
-                              onChange={(e) => {
-                                const updated = [...ticketTiers];
-                                updated[i] = { ...updated[i], limit_window_start: e.target.value ? new Date(e.target.value).toISOString() : "" };
-                                setTicketTiers(updated);
-                              }}
-                              className="h-7 text-xs"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground">Window End (UTC)</Label>
-                            <Input
-                              type="datetime-local"
-                              value={tier.limit_window_end ? tier.limit_window_end.slice(0, 16) : ""}
-                              onChange={(e) => {
-                                const updated = [...ticketTiers];
-                                updated[i] = { ...updated[i], limit_window_end: e.target.value ? new Date(e.target.value).toISOString() : "" };
-                                setTicketTiers(updated);
-                              }}
-                              className="h-7 text-xs"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-[10px] text-muted-foreground">Max in Window</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={20}
-                              value={tier.limit_window_max}
-                              onChange={(e) => {
-                                const val = Math.max(1, Math.min(20, parseInt(e.target.value) || 1));
-                                const updated = [...ticketTiers];
-                                updated[i] = { ...updated[i], limit_window_max: String(val) };
-                                setTicketTiers(updated);
-                              }}
-                              className="h-7 text-xs"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs">Qty</Label>
+                    <Input
+                      type="number"
+                      value={tier.quantity}
+                      onChange={(e) => {
+                        const updated = [...ticketTiers];
+                        updated[i] = { ...updated[i], quantity: e.target.value };
+                        setTicketTiers(updated);
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                    onClick={async () => {
+                      if (tier.id) {
+                        await supabase.from("ticket_tiers").delete().eq("id", tier.id);
+                        toast.success("Tier deleted");
+                      }
+                      setTicketTiers((prev) => prev.filter((_, j) => j !== i));
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -1177,6 +782,95 @@ export default function CreateEvent() {
             ? "Schedule Event"
             : "Publish Event"}
         </Button>
+
+        {/* Cancel / Delete — edit mode only */}
+        {isEditMode && draftId && (
+          <>
+            <Separator className="my-6" />
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-foreground">Danger Zone</p>
+
+              {/* Cancel Event */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full rounded-full border-destructive/40 text-destructive hover:bg-destructive/5 gap-2">
+                    <AlertTriangle className="w-4 h-4" /> Cancel Event
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel this event?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will mark the event as cancelled. All active tickets will be cancelled and ticket holders will see a cancellation notice. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Event</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={async () => {
+                        try {
+                          await supabase.from("events").update({
+                            sales_status: "cancelled",
+                            cancelled_at: new Date().toISOString(),
+                          } as any).eq("id", draftId);
+
+                          await supabase.from("tickets").update({ status: "cancelled" } as any)
+                            .eq("event_id", draftId).in("status", ["active", "valid"]);
+
+                          await supabase.from("purchases").update({ status: "event_cancelled" } as any)
+                            .eq("event_id", draftId).in("status", ["confirmed", "deposit_paid", "partial"]);
+
+                          toast.success("Event cancelled");
+                          navigate("/dashboard");
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to cancel event");
+                        }
+                      }}
+                    >
+                      Cancel Event
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              {/* Delete Event */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full rounded-full border-destructive/40 text-destructive hover:bg-destructive/5 gap-2">
+                    <Trash2 className="w-4 h-4" /> Delete Event
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Permanently delete this event?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove the event, all ticket tiers, and associated data. If tickets have been sold, consider cancelling instead. This cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Event</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={async () => {
+                        try {
+                          await supabase.from("ticket_tiers").delete().eq("event_id", draftId);
+                          await supabase.from("events").delete().eq("id", draftId);
+                          toast.success("Event deleted");
+                          navigate("/dashboard");
+                        } catch (err: any) {
+                          toast.error(err.message || "Failed to delete event");
+                        }
+                      }}
+                    >
+                      Delete Permanently
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </>
+        )}
       </form>
     </div>
   );

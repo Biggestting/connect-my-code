@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import tifeteLogo from "@/assets/tifete-logo.png";
 
 export default function SignUpPage() {
   const { user, loading: authLoading } = useAuth();
@@ -97,34 +98,46 @@ export default function SignUpPage() {
 
   if (emailSent) {
     return (
-      <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="flex min-h-[80vh] items-center justify-center px-4 py-8">
         <div className="w-full max-w-sm space-y-6 text-center">
-          <h1 className="text-3xl font-extrabold">
-            <span className="gradient-primary bg-clip-text text-transparent">Ti'Fete</span>
-          </h1>
-          <h2 className="text-xl font-bold">Check your email</h2>
-          <p className="text-muted-foreground">
-            We've sent a confirmation email to <strong>{email}</strong>.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Please click the verification link in the email to complete your account registration.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            If you don't see the email, check your spam folder.
-          </p>
-          <Button variant="outline" className="rounded-full" onClick={handleResend} disabled={resending}>
-            {resending ? "Resending..." : "Resend Email"}
-          </Button>
-          <Link to="/auth" className="block text-sm text-accent hover:underline">
-            Back to Sign In
-          </Link>
+          <div>
+            <img src={tifeteLogo} alt="Ti'Fete" className="h-16 w-auto mx-auto" />
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-foreground">Check your email</h2>
+            <p className="text-sm text-muted-foreground">
+              We've sent a confirmation email to <strong className="text-foreground">{email}</strong>.
+              <br />
+              Please click the verification link in the email to complete your account registration.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              If you don't see the email, check your spam folder.
+            </p>
+          </div>
+          <div className="space-y-3">
+            <Button
+              onClick={handleResend}
+              variant="outline"
+              className="w-full rounded-full h-11"
+              disabled={resending}
+            >
+              {resending ? "Resending..." : "Resend Email"}
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              className="w-full rounded-full h-11"
+            >
+              <Link to="/auth">Back to Sign In</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold">
@@ -132,38 +145,90 @@ export default function SignUpPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-2">Create your account</p>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="firstName">First Name</Label>
-            <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name</Label>
-            <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" required />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="first-name">First Name</Label>
+              <Input
+                id="first-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="John"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="last-name">Last Name</Label>
+              <Input
+                id="last-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Doe"
+                required
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">Phone Number</Label>
-            <Input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+1 (555) 000-0000" required />
+            <Input
+              id="phone"
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="+1 (555) 000-0000"
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
+            <Label htmlFor="confirm-password">Confirm Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
           </div>
-          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold rounded-full h-11" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full gradient-primary text-primary-foreground font-semibold rounded-full h-11"
+            disabled={loading}
+          >
             {loading ? "Creating account..." : "Create Account"}
           </Button>
         </form>
+
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link to="/auth" className="text-accent font-medium hover:underline">Sign In</Link>
+          <Link to="/auth" className="text-accent font-medium hover:underline">
+            Sign In
+          </Link>
         </p>
       </div>
     </div>

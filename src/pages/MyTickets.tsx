@@ -324,6 +324,9 @@ function TicketCard({ ticket, isPast }: { ticket: TicketWithRelations; isPast?: 
             {ticket.status === "used" && (
               <Badge variant="secondary" className="text-[10px] py-0 px-2">Attended</Badge>
             )}
+            {ticket.status === "cancelled" && (
+              <Badge variant="destructive" className="text-[10px] py-0 px-2">Event Cancelled</Badge>
+            )}
             {isListed && (
               <Badge variant="outline" className="text-[10px] py-0 px-2 border-amber-500 text-amber-600">
                 Status: Listed for Sale
@@ -627,22 +630,11 @@ function DynamicQRDisplay({ ticketId, eventTitle, tierName }: { ticketId: string
     refresh();
   }, [refresh]);
 
-  const [countdown, setCountdown] = useState(0);
-  useEffect(() => {
-    if (!qrData?.expiresAt) return;
-    const interval = setInterval(() => {
-      const remaining = Math.max(0, Math.floor((new Date(qrData.expiresAt).getTime() - Date.now()) / 1000));
-      setCountdown(remaining);
-      if (remaining <= 0) refresh();
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [qrData?.expiresAt, refresh]);
-
   return (
     <div className="flex flex-col items-center gap-4 py-4">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Shield className="w-3.5 h-3.5 text-primary" />
-        <span>Dynamic QR — rotates every 5 min</span>
+        <span>Secure single-use QR code</span>
       </div>
 
       {loading && !qrData ? (
@@ -658,15 +650,9 @@ function DynamicQRDisplay({ ticketId, eventTitle, tierName }: { ticketId: string
       )}
 
       {qrData && (
-        <div className="text-center space-y-1">
-          <p className="text-xs text-muted-foreground">
-            Expires in <span className="font-mono font-bold text-foreground">{Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}</span>
-          </p>
-          <Button variant="ghost" size="sm" onClick={refresh} disabled={loading} className="text-xs gap-1">
-            <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
-            Refresh Now
-          </Button>
-        </div>
+        <p className="text-xs text-muted-foreground text-center">
+          Screenshot-safe — this QR is valid until scanned at the event
+        </p>
       )}
 
       <div className="text-center border-t border-border pt-3 w-full">

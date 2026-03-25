@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useOrganizerByUserId, useOrganizerEvents } from "@/hooks/use-organizer";
+import { useOrganizerRecentActivity } from "@/hooks/use-organizer-activity";
 import { useNavigate, Link } from "react-router-dom";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
-  BarChart3, Calendar, Ticket, Users, Settings, Plus, QrCode,
-  TrendingUp, DollarSign, Eye, Megaphone, Package, ShoppingBag, Pencil
+  BarChart3, Calendar, Ticket, Settings, Plus,
+  TrendingUp, DollarSign, Eye, Megaphone, Package, ShoppingBag, Pencil, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,12 +17,11 @@ import { InventoryTab } from "@/components/dashboard/InventoryTab";
 import { ProductsTab } from "@/components/dashboard/ProductsTab";
 import { EventFallbackImage } from "@/components/EventFallbackImage";
 
-type Tab = "overview" | "events" | "orders" | "inventory" | "products" | "carnivals" | "insights" | "promoters" | "settings";
+type Tab = "overview" | "events" | "inventory" | "products" | "carnivals" | "insights" | "promoters" | "settings";
 
 const sidebarItems: { key: Tab; label: string; icon: any }[] = [
   { key: "overview", label: "Overview", icon: BarChart3 },
-  { key: "events", label: "My Events", icon: Calendar },
-  { key: "orders", label: "Orders", icon: Ticket },
+  { key: "events", label: "Events", icon: Calendar },
   { key: "inventory", label: "Inventory", icon: Package },
   { key: "products", label: "Products", icon: ShoppingBag },
   { key: "promoters", label: "Promoters", icon: Megaphone },
@@ -42,28 +42,24 @@ export default function OrganizerDashboard() {
   const totalEvents = events?.length || 0;
 
   const totalTicketsSold = events?.reduce((sum, e) => {
-    return sum + (e.ticket_tiers?.reduce((s: number, t: any) => s + t.sold_count, 0) || 0);
+    return sum + (e.ticket_tiers?.reduce((s, t) => s + t.sold_count, 0) || 0);
   }, 0) || 0;
 
   const grossSales = events?.reduce((sum, e) => {
-    return sum + (e.ticket_tiers?.reduce((s: number, t: any) => s + (Number(t.price) * t.sold_count), 0) || 0);
+    return sum + (e.ticket_tiers?.reduce((s, t) => s + (Number(t.price) * t.sold_count), 0) || 0);
   }, 0) || 0;
 
   const carnivalMap = new Map<string, { name: string; year: number | null; events: typeof events }>();
   (events?.filter((e) => e.carnival_id) || []).forEach((e) => {
     const key = e.carnival_id!;
     if (!carnivalMap.has(key)) {
-      carnivalMap.set(key, { name: (e as any).carnivals?.name || "Unknown", year: e.carnival_year, events: [] });
+      carnivalMap.set(key, { name: e.carnivals?.name || "Unknown", year: e.carnival_year, events: [] });
     }
     carnivalMap.get(key)!.events!.push(e);
   });
 
   const tools = [
     { icon: Plus, label: "Create Event", path: "/dashboard/create-event" },
-    { icon: Calendar, label: "Manage Events", path: "/dashboard" },
-    { icon: Ticket, label: "View Orders", path: "/dashboard" },
-    { icon: QrCode, label: "Scan Tickets", path: "/dashboard" },
-    { icon: Settings, label: "Edit Profile", path: organizer ? `/organizers/${organizer.slug}` : "/dashboard" },
   ];
 
   if (!user) {
@@ -129,7 +125,7 @@ export default function OrganizerDashboard() {
           ))}
         </div>
 
-        <div className="flex-1 max-w-4xl mx-auto">
+        <div className="flex-1 w-full max-w-7xl mx-auto">
           {/* Organizer Header */}
           <section className="px-4 py-5 border-b border-border">
             <h1 className="text-xl font-bold text-foreground">{organizer.name}</h1>
@@ -146,15 +142,13 @@ export default function OrganizerDashboard() {
               tools={tools}
               navigate={navigate}
               setActiveTab={setActiveTab}
+              organizerId={organizer.id}
+              eventIds={(events || []).map((e) => e.id)}
             />
           )}
 
           {activeTab === "events" && (
             <EventsTab events={events || []} navigate={navigate} />
-          )}
-
-          {activeTab === "orders" && (
-            <OrdersTab events={events || []} />
           )}
 
           {activeTab === "inventory" && (
@@ -190,7 +184,9 @@ export default function OrganizerDashboard() {
 
 /* ─── Tab Components ─── */
 
-function OverviewTab({ upcomingEvents, totalTicketsSold, grossSales, totalEvents, tools, navigate, setActiveTab }: any) {
+function OverviewTab({ upcomingEvents, totalTicketsSold, grossSales, totalEvents, tools, navigate, setActiveTab, organizerId, eventIds }: any) {
+  const { data: recentActivity, isLoading: activityLoading } = useOrganizerRecentActivity(organizerId, eventIds);
+
   return (
     <>
       <section className="px-4 py-5">
@@ -204,8 +200,8 @@ function OverviewTab({ upcomingEvents, totalTicketsSold, grossSales, totalEvents
       <Separator />
       <section className="px-4 py-5 md:hidden">
         <h2 className="text-base font-bold text-foreground mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-4 gap-2">
-          {tools.slice(0, 3).map((tool: any) => (
+        <div className="grid grid-cols-2 gap-2">
+          {tools.map((tool: any) => (
             <button
               key={tool.label}
               onClick={() => navigate(tool.path)}
@@ -226,37 +222,35 @@ function OverviewTab({ upcomingEvents, totalTicketsSold, grossSales, totalEvents
       </section>
       <Separator />
       <section className="px-4 py-5">
-        <h2 className="text-base font-bold text-foreground mb-3">Upcoming Events</h2>
-        {upcomingEvents.length > 0 ? (
+        <h2 className="text-base font-bold text-foreground mb-3">Recent Activity</h2>
+        {activityLoading ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-foreground animate-pulse">Loading activity...</p>
+          </div>
+        ) : recentActivity && recentActivity.length > 0 ? (
           <div className="space-y-2">
-            {upcomingEvents.slice(0, 5).map((event: any) => (
-              <EventRow key={event.id} event={event} />
+            {recentActivity.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl border border-border">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <Ticket className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                  <p className="text-xs text-muted-foreground">{item.subtitle}</p>
+                </div>
+                <p className="text-xs text-muted-foreground shrink-0">
+                  {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
+                </p>
+              </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="text-muted-foreground text-sm">No upcoming events.</p>
-            <Button onClick={() => navigate("/dashboard/create-event")} className="mt-3 gradient-primary text-primary-foreground rounded-full" size="sm">
-              <Plus className="w-4 h-4 mr-1" /> Create Event
-            </Button>
+            <Activity className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No recent activity yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">Ticket sales and promo usage will appear here.</p>
           </div>
         )}
-      </section>
-      <Separator />
-      <section className="px-4 py-5">
-        <h2 className="text-base font-bold text-foreground mb-3">Organizer Tools</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {tools.map((tool: any) => (
-            <button
-              key={tool.label}
-              onClick={() => navigate(tool.path)}
-              className="flex items-center gap-2 p-3 rounded-xl border border-border hover:bg-muted transition-colors text-left"
-            >
-              <tool.icon className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-sm font-medium text-foreground">{tool.label}</span>
-            </button>
-          ))}
-        </div>
       </section>
     </>
   );
@@ -300,47 +294,6 @@ function EventsTab({ events, navigate }: { events: any[]; navigate: any }) {
           <Button onClick={() => navigate("/dashboard/create-event")} className="mt-3 gradient-primary text-primary-foreground rounded-full" size="sm">
             <Plus className="w-4 h-4 mr-1" /> Create Event
           </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function OrdersTab({ events }: { events: any[] }) {
-  const allTiers = events.flatMap((e) =>
-    (e.ticket_tiers || []).map((t: any) => ({
-      ...t,
-      eventTitle: e.title,
-      eventDate: e.date,
-    }))
-  );
-  const tiersWithSales = allTiers.filter((t) => t.sold_count > 0);
-
-  return (
-    <div className="px-4 py-5">
-      <h2 className="text-base font-bold text-foreground mb-3">Ticket Sales by Tier</h2>
-      {tiersWithSales.length > 0 ? (
-        <div className="space-y-2">
-          {tiersWithSales.map((tier: any) => (
-            <div key={tier.id} className="flex items-center gap-3 p-3 rounded-xl border border-border">
-              <Ticket className="w-4 h-4 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{tier.eventTitle}</p>
-                <p className="text-xs text-muted-foreground">
-                  {tier.name} · {tier.sold_count}/{tier.quantity} sold
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-foreground">${(Number(tier.price) * tier.sold_count).toLocaleString()}</p>
-                <p className="text-[10px] text-muted-foreground">${Number(tier.price)} each</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <Ticket className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">No ticket sales yet.</p>
         </div>
       )}
     </div>

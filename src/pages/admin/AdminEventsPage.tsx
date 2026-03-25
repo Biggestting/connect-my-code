@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Calendar, MoreVertical, Pause, Play, EyeOff, XCircle, Copy, Eye, Download, CalendarIcon, X } from "lucide-react";
+import { Search, Calendar, MoreVertical, Pause, Play, EyeOff, XCircle, Copy, Eye, Download, CalendarIcon, X, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -112,6 +112,41 @@ export default function AdminEventsPage() {
       clone_event: "Clone Event",
     };
 
+    if (action === "delete_event") {
+      setConfirmDialog({
+        open: true,
+        title: "Delete Event Permanently",
+        description: `This will permanently delete "${event.title}" and all associated ticket tiers, tickets, and purchase records. This cannot be undone.`,
+        onConfirm: async () => {
+          try {
+            await adminAction.mutateAsync({
+              action: "delete_event",
+              targetType: "event",
+              targetId: event.id,
+              details: { title: event.title },
+              execute: async () => {
+                // Delete in order: purchases → tickets → tiers → event
+                await supabase.from("purchase_addons").delete().in(
+                  "purchase_id",
+                  (await supabase.from("purchases").select("id").eq("event_id", event.id)).data?.map((p: any) => p.id) || []
+                );
+                await supabase.from("purchases").delete().eq("event_id", event.id);
+                await supabase.from("tickets").delete().eq("event_id", event.id);
+                await supabase.from("ticket_tiers").delete().eq("event_id", event.id);
+                const { error } = await supabase.from("events").delete().eq("id", event.id);
+                if (error) throw error;
+              },
+            });
+            toast.success("Event permanently deleted");
+            queryClient.invalidateQueries({ queryKey: ["admin-events-full"] });
+          } catch (err: any) {
+            toast.error(err.message);
+          }
+        },
+      });
+      return;
+    }
+
     if (action === "clone_event") {
       setConfirmDialog({
         open: true,
@@ -177,7 +212,9 @@ export default function AdminEventsPage() {
     setConfirmDialog({
       open: true,
       title: labels[action] || action,
-      description: `Are you sure you want to ${labels[action]?.toLowerCase()} for "${event.title}"?`,
+      description: action === "cancel_event"
+        ? `Are you sure you want to cancel "${event.title}"? All active tickets will be marked as cancelled and ticket holders will see a cancellation notice.`
+        : `Are you sure you want to ${labels[action]?.toLowerCase()} for "${event.title}"?`,
       onConfirm: async () => {
         try {
           await adminAction.mutateAsync({
@@ -189,8 +226,27 @@ export default function AdminEventsPage() {
               const updates: any = {};
               if (salesStatus !== undefined) updates.sales_status = salesStatus;
               if (hidden !== undefined) updates.hidden = hidden;
+              if (action === "cancel_event") {
+                updates.cancelled_at = new Date().toISOString();
+              }
               const { error } = await supabase.from("events").update(updates).eq("id", event.id);
               if (error) throw error;
+
+              // When cancelling, also mark all active tickets as cancelled
+              if (action === "cancel_event") {
+                await supabase
+                  .from("tickets")
+                  .update({ status: "cancelled" } as any)
+                  .eq("event_id", event.id)
+                  .in("status", ["active", "valid"]);
+
+                // Mark pending purchases as cancelled too
+                await supabase
+                  .from("purchases")
+                  .update({ status: "event_cancelled" } as any)
+                  .eq("event_id", event.id)
+                  .in("status", ["confirmed", "deposit_paid", "partial"]);
+              }
             },
           });
           toast.success(`${labels[action]} applied`);
@@ -320,6 +376,11 @@ export default function AdminEventsPage() {
                       {!isCancelled && (
                         <DropdownMenuItem onClick={() => doAction("cancel_event", event, "cancelled")} className="text-destructive">
                           <XCircle className="w-3.5 h-3.5 mr-2" /> Cancel Event
+                        </DropdownMenuItem>
+                      )}
+                      {isCancelled && (
+                        <DropdownMenuItem onClick={() => doAction("delete_event", event)} className="text-destructive">
+                          <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete Permanently
                         </DropdownMenuItem>
                       )}
                       {!event.hidden ? (

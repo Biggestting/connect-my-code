@@ -16,9 +16,9 @@ function json(body: Record<string, unknown>, status = 200) {
 
 // Platform fee rates
 const FEE_RATES: Record<string, number> = {
-  ticket: 0.1,
-  costume: 0.07,
-  jouvert: 0.1,
+  ticket: 0.1,   // 10%
+  costume: 0.07, // 7%
+  jouvert: 0.1,  // 10%
 };
 
 Deno.serve(async (req) => {
@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
     return json({ error: "Stripe not configured" }, 500);
   }
 
+  // ── Auth ──────────────────────────────────────────────────
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return json({ error: "Unauthorized" }, 401);
@@ -51,6 +52,7 @@ Deno.serve(async (req) => {
   }
   const user = userData.user;
 
+  // ── Parse request ─────────────────────────────────────────
   const {
     eventId,
     productType,
@@ -59,13 +61,13 @@ Deno.serve(async (req) => {
     jouvertPackageId,
     quantity = 1,
     selectedSize,
-    paymentOption = "full",
+    paymentOption = "full", // "full" | "deposit"
     reservationId,
     checkoutToken,
     promoterId,
     commissionRate,
-    addons,
-    customizationResponses,
+    addons, // Array of { addon_id, quantity, size_label?, size_value? }
+    customizationResponses, // Record<string, string> label→value
   } = await req.json();
 
   if (!eventId || !productType) {
@@ -75,6 +77,7 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceRoleKey);
   const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-08-27.basil" });
 
+  // ── Fetch event + organizer ───────────────────────────────
   const { data: event, error: eventError } = await admin
     .from("events")
     .select("id, title, image_url, organizer_id, organizers:organizer_id(id, name, stripe_account_id, stripe_onboarding_complete)")
@@ -87,6 +90,7 @@ Deno.serve(async (req) => {
 
   const organizer = (event as any).organizers;
 
+  // ── Fetch product and compute price ───────────────────────
   let unitPrice = 0;
   let productName = "";
   let depositAmount: number | null = null;
@@ -123,6 +127,7 @@ Deno.serve(async (req) => {
     return json({ error: "Invalid product type or missing product ID" }, 400);
   }
 
+  // ── Resolve addon details ──────────────────────────────────
   interface ResolvedAddon {
     addon_id: string;
     addon_name: string;
@@ -158,11 +163,13 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ── Compute charge amount ─────────────────────────────────
   const isDeposit = productType === "costume" && paymentOption === "deposit" && depositAmount && depositAmount > 0;
   const chargePerUnit = isDeposit ? depositAmount! : unitPrice;
   const totalCharge = chargePerUnit * quantity + addonsCharge;
   const totalFull = unitPrice * quantity + addonsCharge;
 
+  // Helper to create purchase_addons rows and decrement size inventory
   async function savePurchaseAddons(purchaseId: string) {
     for (const ra of resolvedAddons) {
       await admin.from("purchase_addons").insert({
@@ -175,11 +182,13 @@ Deno.serve(async (req) => {
         size_value: ra.size_value || null,
       });
 
+      // Decrement addon sold_count
       const { data: addonRow } = await admin.from("product_addons").select("sold_count").eq("id", ra.addon_id).single();
       if (addonRow) {
         await admin.from("product_addons").update({ sold_count: addonRow.sold_count + ra.quantity }).eq("id", ra.addon_id);
       }
 
+      // Decrement size inventory if applicable
       if (ra.size_value) {
         const { data: sizeRow } = await admin
           .from("addon_size_options")
@@ -196,7 +205,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // FREE PURCHASE: skip Stripe entirely
+  // ── FREE PURCHASE: skip Stripe entirely ───────────────────
   if (totalCharge === 0) {
     try {
       const purchaseData: Record<string, unknown> = {
@@ -238,8 +247,10 @@ Deno.serve(async (req) => {
         return json({ error: "Failed to create purchase record" }, 500);
       }
 
+      // Save addon snapshots
       await savePurchaseAddons(purchase.id);
 
+      // Update sold_count for the product
       if (productType === "ticket" && ticketTierId) {
         const { data: tier } = await admin.from("ticket_tiers").select("sold_count").eq("id", ticketTierId).single();
         if (tier) {
@@ -257,18 +268,22 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Create ticket records for free ticket purchases
       if (productType === "ticket") {
         const ticketInserts = Array.from({ length: quantity }, () => ({
           event_id: eventId,
           owner_user_id: user.id,
           purchase_id: purchase.id,
           ticket_tier_id: ticketTierId || null,
-          status: "active",
+          status: "valid",
           fulfillment_type: "digital",
+          qr_token: crypto.randomUUID(),
+          qr_token_expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
         }));
         await admin.from("tickets").insert(ticketInserts);
       }
 
+      // Complete reservation if provided
       if (reservationId) {
         await admin.rpc("complete_reservation", {
           _reservation_id: reservationId,
@@ -283,10 +298,14 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Amount in cents for Stripe
   const amountCents = Math.round(totalCharge * 100);
+
+  // ── Platform fee ──────────────────────────────────────────
   const feeRate = FEE_RATES[productType] ?? 0.1;
   const applicationFeeCents = Math.round(amountCents * feeRate);
 
+  // ── Stripe customer lookup ────────────────────────────────
   let customerId: string | undefined;
   if (user.email) {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -295,6 +314,7 @@ Deno.serve(async (req) => {
     }
   }
 
+  // ── Build session params ──────────────────────────────────
   const origin = req.headers.get("origin") || "https://tifete.lovable.app";
 
   const metadata: Record<string, string> = {
@@ -319,6 +339,7 @@ Deno.serve(async (req) => {
     }),
   };
 
+  // Build line items: main product + addon line items
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
     {
       price_data: {
@@ -333,6 +354,7 @@ Deno.serve(async (req) => {
     },
   ];
 
+  // Add each addon as a separate line item
   for (const ra of resolvedAddons) {
     const sizeLabel = ra.size_label ? ` (${ra.size_label})` : "";
     lineItems.push({
@@ -358,6 +380,7 @@ Deno.serve(async (req) => {
     },
   };
 
+  // ── Stripe Connect destination charge ─────────────────────
   if (organizer?.stripe_account_id && organizer?.stripe_onboarding_complete) {
     sessionParams.payment_intent_data = {
       ...sessionParams.payment_intent_data,

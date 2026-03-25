@@ -10,6 +10,8 @@ export function useEvents(category?: string, search?: string, location?: string)
         .from("events")
         .select("*, organizers(*), carnivals(*), ticket_tiers(*)")
         .eq("publishing_status", "published")
+        .neq("hidden", true)
+        .neq("sales_status", "cancelled")
         .order("date", { ascending: true });
 
       if (category && category !== "all") {
@@ -28,36 +30,6 @@ export function useEvents(category?: string, search?: string, location?: string)
 
       const { data, error } = await query;
       if (error) throw error;
-
-      // If searching, also find events by organizer name and merge
-      if (search) {
-        let orgQuery = supabase
-          .from("events")
-          .select("*, organizers!inner(*), carnivals(*), ticket_tiers(*)")
-          .eq("publishing_status", "published")
-          .ilike("organizers.name", `%${search}%`);
-
-        if (category && category !== "all") {
-          orgQuery = orgQuery.eq("category", category);
-        }
-        if (location && location !== "All Locations") {
-          orgQuery = orgQuery.ilike("city", `%${location}%`);
-        }
-
-        const { data: orgData } = await orgQuery;
-        if (orgData) {
-          const existingIds = new Set(data?.map((e) => e.id) || []);
-          const merged = [...(data || [])];
-          for (const event of orgData) {
-            if (!existingIds.has(event.id)) {
-              merged.push(event);
-            }
-          }
-          merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-          return merged as EventWithRelations[];
-        }
-      }
-
       return data as EventWithRelations[];
     },
   });
@@ -114,6 +86,9 @@ export function useRelatedEvents(event: EventWithRelations | undefined) {
         .from("events")
         .select("*, organizers(*), ticket_tiers(*)")
         .neq("id", event.id)
+        .eq("publishing_status", "published")
+        .neq("hidden", true)
+        .neq("sales_status", "cancelled")
         .limit(10);
 
       if (error) throw error;

@@ -1,309 +1,394 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useMyOrganizerRequests } from "@/hooks/use-organizer-requests";
-import { useActiveProfile } from "@/hooks/use-active-profile";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useActiveProfile } from "@/hooks/use-active-profile";
+import { useIsAdmin } from "@/hooks/use-admin";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  User, LogOut, Ticket, Heart, ChevronRight, Megaphone, Pencil, Trash2, Mail,
+  Building2, ArrowRightLeft, Shield, Settings, CreditCard, ShoppingBag
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import {
-  User, Ticket, Heart, Settings, LogOut, ChevronRight,
-  Shield, HelpCircle, FileText, Bell, Megaphone, Trash2
-} from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const menuItems = [
-  { icon: User, label: "Profile", path: "/profile" },
-  { icon: Ticket, label: "My Tickets", path: "/tickets" },
-  { icon: Heart, label: "Saved", path: "/saved" },
-  { icon: Bell, label: "Price Alerts", path: "/saved" },
-  { icon: Settings, label: "Settings", path: "/account" },
-];
-
-const legalItems = [
-  { icon: FileText, label: "Terms of Service", path: "/terms" },
-  { icon: Shield, label: "Privacy Policy", path: "/privacy" },
-  { icon: HelpCircle, label: "Accessibility", path: "/accessibility" },
-];
-
 export default function AccountPage() {
-  const { user, loading, signOut } = useAuth();
-  const { isOrganizerMode } = useActiveProfile();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const { data: myRequests } = useMyOrganizerRequests(user?.id);
-
-  const [deleteStep, setDeleteStep] = useState<"confirm" | "reauth">("confirm");
-  const [deletePassword, setDeletePassword] = useState("");
+  const queryClient = useQueryClient();
   const [deleting, setDeleting] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
-  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const {
+    activeProfile, switchToUser, switchToOrganizer,
+    isOrganizerMode, userOrganizers
+  } = useActiveProfile();
+  const { data: isAdmin } = useIsAdmin();
 
-  useEffect(() => {
-    return () => {
-      if (cooldownRef.current) clearInterval(cooldownRef.current);
-    };
-  }, []);
-
-  const latestRequest = myRequests?.[0];
-  const hasPendingRequest = latestRequest?.status === "pending";
-  const hasApprovedRequest = latestRequest?.status === "approved";
-  const showOrganizerCTA = !isOrganizerMode && !hasApprovedRequest;
-
-  if (loading) return null;
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <User className="h-12 w-12 text-muted-foreground mx-auto" />
-          <h1 className="text-xl font-bold text-foreground">Sign in to your account</h1>
-          <Button onClick={() => navigate("/auth")} className="gradient-primary text-primary-foreground rounded-full">
-            Sign In
-          </Button>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <User className="w-12 h-12 text-muted-foreground/40 mb-4" />
+        <p className="text-lg font-semibold text-foreground mb-1">Sign in to QUARA</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          Manage your account, tickets, and saved items.
+        </p>
+        <Button onClick={() => navigate("/auth")} className="gradient-primary text-primary-foreground rounded-full">
+          Sign In
+        </Button>
       </div>
     );
   }
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
-
-  const startCooldown = () => {
-    setCooldown(7);
-    cooldownRef.current = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(cooldownRef.current!);
-          cooldownRef.current = null;
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   const handleDeleteAccount = async () => {
-    if (deleteStep === "confirm") {
-      setDeleteStep("reauth");
-      startCooldown();
-      return;
-    }
-
-    // Re-authenticate before deletion
-    if (!deletePassword.trim()) {
-      toast.error("Please enter your password to confirm deletion.");
-      return;
-    }
-
     setDeleting(true);
     try {
-      // Re-authenticate to verify identity
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email!,
-        password: deletePassword,
-      });
-
-      if (signInError) {
-        toast.error("Incorrect password. Please try again.");
-        setDeleting(false);
-        return;
-      }
-
-      // Get fresh session after re-auth
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error("Session expired. Please try again.");
-        setDeleting(false);
-        return;
-      }
+      if (!session) throw new Error("Not authenticated");
 
-      // Call server-side deletion
-      const { data, error } = await supabase.functions.invoke("delete-account", {
+      const res = await supabase.functions.invoke("delete-account", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      if (error || (data && !data.success)) {
-        toast.error(data?.error || "Failed to delete account. Please try again.");
-        setDeleting(false);
-        return;
-      }
-
-      // Sign out locally
+      if (res.error) throw res.error;
       await supabase.auth.signOut();
-      toast.success("Your account has been permanently deleted.");
+      toast.success("Account deleted successfully");
       navigate("/");
-    } catch (err) {
-      console.error("Account deletion error:", err);
-      toast.error("An unexpected error occurred. Please try again.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete account");
     } finally {
       setDeleting(false);
-      setDeleteDialogOpen(false);
-      setDeleteStep("confirm");
-      setDeletePassword("");
     }
   };
 
-  const resetDeleteDialog = () => {
-    setDeleteStep("confirm");
-    setDeletePassword("");
-    setDeleting(false);
+  const menuItems = [
+    { icon: ShoppingBag, label: "Purchases", path: "/tickets", description: "Tickets, costumes & orders" },
+    { icon: Heart, label: "Saved", path: "/saved", description: "Your watchlist" },
+    ...(isAdmin ? [{ icon: Shield, label: "Admin Panel", path: "/admin", description: "Platform management" }] : []),
+  ];
+
+  return (
+    <div className="pb-20 md:pb-8 max-w-4xl mx-auto w-full">
+      <div className="px-4 py-6">
+        <h1 className="text-xl font-bold text-foreground mb-6">Account</h1>
+
+        {/* Profile Header */}
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-card border border-border">
+          <Avatar className="w-16 h-16">
+            <AvatarImage src={profile?.avatar_url || undefined} />
+            <AvatarFallback className="bg-muted text-lg font-bold text-muted-foreground">
+              {(profile?.display_name || user.email || "U").charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground">
+                {profile?.display_name || user.email?.split("@")[0]}
+              </h2>
+              <EditNameDialog
+                currentName={profile?.display_name || ""}
+                userId={user.id}
+                onSuccess={() => queryClient.invalidateQueries({ queryKey: ["profile"] })}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <ChangeEmailDialog currentEmail={user.email || ""} />
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="space-y-1 mb-6">
+          {menuItems.map((item) => (
+            <Link
+              key={item.label}
+              to={item.path}
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors"
+            >
+              <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+                <item.icon className="w-4.5 h-4.5 text-muted-foreground" />
+              </div>
+              <div className="flex-1">
+                <span className="text-sm font-medium text-foreground">{item.label}</span>
+                {item.description && (
+                  <p className="text-xs text-muted-foreground">{item.description}</p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </Link>
+          ))}
+        </div>
+
+        <Separator className="mb-6" />
+
+        {/* Profile Switcher Section */}
+        {userOrganizers && userOrganizers.length > 0 && (
+          <div className="mb-6 p-4 rounded-xl border border-border bg-muted/30">
+            <div className="flex items-center gap-2 mb-3">
+              <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
+              <p className="text-sm font-semibold text-foreground">Your Profiles</p>
+            </div>
+
+            <button
+              onClick={switchToUser}
+              className={`w-full flex items-center gap-3 p-3 rounded-lg mb-1 transition-colors ${
+                !isOrganizerMode ? "bg-primary/10 border border-primary/20" : "hover:bg-muted"
+              }`}
+            >
+              <User className="w-5 h-5 text-muted-foreground" />
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium text-foreground">Personal</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
+              {!isOrganizerMode && (
+                <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Active</span>
+              )}
+            </button>
+
+            {userOrganizers.map((membership) => (
+              <button
+                key={membership.organizer_id}
+                onClick={() =>
+                  switchToOrganizer(
+                    membership.organizer_id,
+                    membership.organizers?.name || "",
+                    membership.organizers?.slug || ""
+                  )
+                }
+                className={`w-full flex items-center gap-3 p-3 rounded-lg mb-1 transition-colors ${
+                  activeProfile.organizerId === membership.organizer_id
+                    ? "bg-primary/10 border border-primary/20"
+                    : "hover:bg-muted"
+                }`}
+              >
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={membership.organizers?.logo_url || undefined} />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                    {(membership.organizers?.name || "O").charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">@{membership.organizers?.slug}</p>
+                  <p className="text-xs text-muted-foreground">{membership.role}</p>
+                </div>
+                {activeProfile.organizerId === membership.organizer_id && (
+                  <span className="text-[10px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">Active</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Organizer Tools */}
+        {userOrganizers && userOrganizers.length > 0 ? (
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-colors mb-2"
+          >
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+              <Megaphone className="w-4.5 h-4.5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <span className="text-sm font-medium text-foreground">Organizer Dashboard</span>
+              <p className="text-xs text-muted-foreground">Manage your events</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </Link>
+        ) : (
+          <Link
+            to="/request-organizer"
+            className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/40 hover:bg-primary/5 transition-colors mb-6"
+          >
+            <Building2 className="w-5 h-5 text-primary" />
+            <div className="flex-1">
+              <span className="text-sm font-medium text-foreground block">Request Organizer Profile</span>
+              <span className="text-xs text-muted-foreground">Apply to start hosting events on QUARA</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          </Link>
+        )}
+
+        <Separator className="my-6" />
+
+        {/* Legal Links */}
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link to="/privacy" className="hover:text-foreground transition-colors">
+            Privacy
+          </Link>
+          <span className="text-muted-foreground/50">•</span>
+          <Link to="/terms" className="hover:text-foreground transition-colors">
+            Terms
+          </Link>
+          <span className="text-muted-foreground/50">•</span>
+          <Link to="/accessibility" className="hover:text-foreground transition-colors">
+            Accessibility
+          </Link>
+        </div>
+
+        {/* Sign Out */}
+        <Button
+          variant="outline"
+          onClick={async () => {
+            await signOut();
+            navigate("/");
+          }}
+          className="w-full rounded-full text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground mb-3"
+        >
+          <LogOut className="w-4 h-4 mr-2" /> Sign Out
+        </Button>
+
+        {/* Delete Account */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full rounded-full text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="w-4 h-4 mr-2" /> Delete Account
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action is permanent. All your data including tickets, saved items, and profile will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-full">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {deleting ? "Deleting..." : "Delete Forever"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+}
+
+function ChangeEmailDialog({ currentEmail }: { currentEmail: string }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    const trimmed = email.trim();
+    if (!trimmed) { toast.error("Email cannot be empty"); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) { toast.error("Please enter a valid email address"); return; }
+    if (trimmed === currentEmail) { toast.error("New email must be different from current email"); return; }
+    setSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: trimmed });
+      if (error) throw error;
+      toast.success("Confirmation email sent to both your old and new address. Please check your inbox.");
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update email");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="p-4 pb-24 max-w-lg mx-auto space-y-6">
-      {/* Profile Header */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
-        <Avatar className="h-14 w-14">
-          <AvatarFallback className="gradient-primary text-primary-foreground text-lg font-bold">
-            {user.email?.charAt(0).toUpperCase() || "U"}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-foreground">{user.email}</p>
-          <p className="text-xs text-muted-foreground">Personal account</p>
-        </div>
-      </div>
-
-      {/* Become an Organizer CTA */}
-      {showOrganizerCTA && (
-        <Link
-          to="/request-organizer"
-          className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:bg-muted/50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Megaphone className="h-5 w-5 text-primary" />
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setEmail(""); }}>
+      <DialogTrigger asChild>
+        <button className="w-6 h-6 rounded-full bg-muted flex items-center justify-center hover:bg-border transition-colors">
+          <Mail className="w-3 h-3 text-muted-foreground" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Change Email Address</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <p className="text-sm text-muted-foreground">
+            Current: <span className="font-medium text-foreground">{currentEmail}</span>
+          </p>
+          <div className="space-y-2">
+            <Label>New Email</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="new@example.com" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">Become an Organizer</p>
-            <p className="text-xs text-muted-foreground">
-              {hasPendingRequest ? "Your application is under review" : "List and sell tickets for your events"}
-            </p>
-          </div>
-          {hasPendingRequest ? (
-            <Badge variant="secondary" className="text-xs">Pending</Badge>
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
-        </Link>
-      )}
-
-      {/* Menu */}
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
-        {menuItems.map((item, i) => (
-          <Link
-            key={item.path + item.label}
-            to={item.path}
-            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
-          >
-            <item.icon className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground flex-1">{item.label}</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        ))}
-      </div>
-
-      {/* Legal */}
-      <div className="rounded-xl bg-card border border-border overflow-hidden">
-        {legalItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className="flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
-          >
-            <item.icon className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground flex-1">{item.label}</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        ))}
-      </div>
-
-      <Button
-        variant="outline"
-        onClick={handleSignOut}
-        className="w-full rounded-full text-destructive border-destructive/30 hover:bg-destructive/10"
-      >
-        <LogOut className="h-4 w-4 mr-2" />
-        Sign Out
-      </Button>
-
-      {/* Delete Account */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => {
-        setDeleteDialogOpen(open);
-        if (!open) resetDeleteDialog();
-      }}>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 text-sm"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Account
+          <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground font-semibold rounded-full h-11">
+            {saving ? "Sending..." : "Update Email"}
           </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {deleteStep === "confirm" ? "Delete your account?" : "Confirm your identity"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteStep === "confirm" ? (
-                "This action is permanent and cannot be undone. All your personal data will be removed, and you will lose access to your tickets, saved events, and promoter records."
-              ) : (
-                "Enter your password to permanently delete your account."
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+          <p className="text-xs text-muted-foreground text-center">You'll need to confirm the change from both email addresses.</p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-          {deleteStep === "reauth" && (
-            <div className="py-2">
-              <Input
-                type="password"
-                placeholder="Enter your password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                disabled={deleting}
-                autoFocus
-              />
-            </div>
-          )}
+function EditNameDialog({ currentName, userId, onSuccess }: { currentName: string; userId: string; onSuccess: () => void; }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(currentName);
+  const [saving, setSaving] = useState(false);
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleDeleteAccount();
-              }}
-              disabled={deleting || (deleteStep === "reauth" && (cooldown > 0 || !deletePassword.trim()))}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleting
-                ? "Deleting..."
-                : deleteStep === "confirm"
-                ? "Continue"
-                : cooldown > 0
-                ? `Wait ${cooldown}s`
-                : "Delete Permanently"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+  const handleSave = async () => {
+    if (!name.trim()) { toast.error("Name cannot be empty"); return; }
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("profiles").update({ display_name: name.trim() }).eq("user_id", userId);
+      if (error) throw error;
+      toast.success("Name updated!");
+      onSuccess();
+      setOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update name");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setName(currentName); }}>
+      <DialogTrigger asChild>
+        <button className="w-7 h-7 rounded-full bg-muted flex items-center justify-center hover:bg-border transition-colors">
+          <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Edit Display Name</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label>Display Name</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+          </div>
+          <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground font-semibold rounded-full h-11">
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

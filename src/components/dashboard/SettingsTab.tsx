@@ -47,7 +47,7 @@ interface SettingsTabProps {
 
 export function SettingsTab({ organizer }: SettingsTabProps) {
   return (
-    <div className="px-4 py-5 space-y-8 max-w-2xl">
+    <div className="px-4 py-5 space-y-8 w-full">
       <BrandInfoSection organizer={organizer} />
       <Separator />
       <EventTypesSection organizer={organizer} />

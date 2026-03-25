@@ -10,6 +10,7 @@ import { TopNav } from "@/components/TopNav";
 import { BottomNav } from "@/components/BottomNav";
 import { MobileHeader } from "@/components/MobileHeader";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
+import { SiteGate } from "@/components/SiteGate";
 import Discovery from "./pages/Discovery";
 import SearchPage from "./pages/Search";
 import EventDetail from "./pages/EventDetail";
@@ -39,9 +40,6 @@ import AccessibilityPage from "./pages/Accessibility";
 import PrivacyPage from "./pages/Privacy";
 import TermsPage from "./pages/Terms";
 import PaymentSuccess from "./pages/PaymentSuccess";
-import JoinPromoter from "./pages/JoinPromoter";
-import ProfilePage from "./pages/Profile";
-import SavedEvents from "./pages/SavedEvents";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -61,85 +59,84 @@ import AdminFraudMonitoring from "./pages/admin/AdminFraudMonitoring";
 const queryClient = new QueryClient();
 
 const App = () => (
+  <SiteGate>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <ActiveProfileProvider>
         <PromoProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                {/* Admin routes - no TopNav/BottomNav */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/kill-switches" element={<AdminKillSwitches />} />
-                <Route path="/admin/carnivals" element={<AdminCarnivals />} />
-                <Route path="/admin/events" element={<AdminEventsPage />} />
-                <Route path="/admin/organizers" element={<AdminOrganizersPage />} />
-                <Route path="/admin/organizer-requests" element={<AdminOrganizerRequests />} />
-                <Route path="/admin/orders" element={<AdminOrdersPage />} />
-                <Route path="/admin/marketplace" element={<AdminMarketplace />} />
-                <Route path="/admin/users" element={<AdminUsersPage />} />
-                <Route path="/admin/announcements" element={<AdminAnnouncements />} />
-                <Route path="/admin/settings" element={<AdminSettings />} />
-                <Route path="/admin/queues" element={<AdminQueues />} />
-                <Route path="/admin/fraud" element={<AdminFraudMonitoring />} />
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Admin routes - no TopNav/BottomNav */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/kill-switches" element={<AdminKillSwitches />} />
+              <Route path="/admin/carnivals" element={<AdminCarnivals />} />
+              <Route path="/admin/events" element={<AdminEventsPage />} />
+              <Route path="/admin/organizers" element={<AdminOrganizersPage />} />
+              <Route path="/admin/organizer-requests" element={<AdminOrganizerRequests />} />
+              <Route path="/admin/orders" element={<AdminOrdersPage />} />
+              <Route path="/admin/marketplace" element={<AdminMarketplace />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/queues" element={<AdminQueues />} />
+              <Route path="/admin/fraud" element={<AdminFraudMonitoring />} />
 
-                {/* Public routes */}
-                <Route path="/*" element={
-                  <>
-                    <AnnouncementBanner />
-                    <MobileHeader />
-                    <TopNav />
-                    <main className="md:container">
-                      <Routes>
-                        <Route path="/" element={<Discovery />} />
-                        <Route path="/search" element={<SearchPage />} />
-                        <Route path="/events/:id" element={<EventDetail />} />
-                        <Route path="/e/:id" element={<EventDeepLink />} />
-                        <Route path="/events/:id/checkout" element={<Checkout />} />
-                        <Route path="/checkout/:id" element={<Checkout />} />
-                        <Route path="/payment-success" element={<PaymentSuccess />} />
-                        <Route path="/bands/:bandId" element={<BandStorefront />} />
-                        <Route path="/bands/:bandId/sections/:sectionId" element={<BandSectionPage />} />
-                        <Route path="/bands/:bandId/sections/:sectionId/versions/:versionId" element={<VersionDetailPage />} />
-                        <Route path="/bands/:bandId/costumes/:costumeId" element={<CostumeDetail />} />
-                        <Route path="/auth" element={<AuthPage />} />
-                        <Route path="/login" element={<Navigate to="/auth" replace />} />
-                        <Route path="/signup" element={<SignUpPage />} />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/tickets" element={<MyTickets />} />
-                        <Route path="/claim-ticket" element={<ClaimTicket />} />
-                        <Route path="/saved" element={<SavedPage />} />
-                        <Route path="/saved-events" element={<SavedEvents />} />
-                        <Route path="/marketplace" element={<Marketplace />} />
-                        <Route path="/account" element={<AccountPage />} />
-                        <Route path="/profile" element={<ProfilePage />} />
-                        <Route path="/request-organizer" element={<RequestOrganizer />} />
-                        <Route path="/promoter-dashboard" element={<PromoterDashboard />} />
-                        <Route path="/join/promoter/:token" element={<JoinPromoter />} />
-                        <Route path="/organizers/:slug" element={<OrganizerProfile />} />
-                        <Route path="/carnivals/:slug" element={<CarnivalHub />} />
-                        <Route path="/dashboard" element={<OrganizerDashboard />} />
-                        <Route path="/dashboard/create-event" element={<CreateEvent />} />
-                        <Route path="/dashboard/edit-event/:id" element={<CreateEvent />} />
-                        <Route path="/accessibility" element={<AccessibilityPage />} />
-                        <Route path="/privacy" element={<PrivacyPage />} />
-                        <Route path="/terms" element={<TermsPage />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </main>
-                    <BottomNav />
-                  </>
-                } />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+              {/* Public routes */}
+              <Route path="/*" element={
+                <>
+                  <AnnouncementBanner />
+                  <MobileHeader />
+                  <TopNav />
+                  <main className="md:container">
+                    <Routes>
+                      <Route path="/" element={<Discovery />} />
+                      <Route path="/search" element={<SearchPage />} />
+                      <Route path="/events/:id" element={<EventDetail />} />
+                      <Route path="/e/:id" element={<EventDeepLink />} />
+                      <Route path="/events/:id/checkout" element={<Checkout />} />
+                      <Route path="/payment-success" element={<PaymentSuccess />} />
+                      <Route path="/bands/:bandId" element={<BandStorefront />} />
+                      <Route path="/bands/:bandId/sections/:sectionId" element={<BandSectionPage />} />
+                      <Route path="/bands/:bandId/sections/:sectionId/versions/:versionId" element={<VersionDetailPage />} />
+                      <Route path="/bands/:bandId/costumes/:costumeId" element={<CostumeDetail />} />
+                      <Route path="/auth" element={<AuthPage />} />
+                      <Route path="/signup" element={<SignUpPage />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/tickets" element={<MyTickets />} />
+                      <Route path="/claim-ticket" element={<ClaimTicket />} />
+                      <Route path="/saved" element={<SavedPage />} />
+                      <Route path="/marketplace" element={<Marketplace />} />
+                      <Route path="/account" element={<AccountPage />} />
+                      {/* Redirect old /profile to /account */}
+                      <Route path="/profile" element={<Navigate to="/account" replace />} />
+                      <Route path="/request-organizer" element={<RequestOrganizer />} />
+                      <Route path="/promoter-dashboard" element={<PromoterDashboard />} />
+                      <Route path="/organizers/:slug" element={<OrganizerProfile />} />
+                      <Route path="/carnivals/:slug" element={<CarnivalHub />} />
+                      <Route path="/dashboard" element={<OrganizerDashboard />} />
+                      <Route path="/dashboard/create-event" element={<CreateEvent />} />
+                      <Route path="/dashboard/edit-event/:id" element={<CreateEvent />} />
+                      <Route path="/accessibility" element={<AccessibilityPage />} />
+                      <Route path="/privacy" element={<PrivacyPage />} />
+                      <Route path="/terms" element={<TermsPage />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </main>
+                  <BottomNav />
+                </>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
         </PromoProvider>
       </ActiveProfileProvider>
     </AuthProvider>
   </QueryClientProvider>
+  </SiteGate>
 );
 
 export default App;
