@@ -49,6 +49,7 @@ Deno.serve(async (req) => {
         const isBalancePayment = pi.metadata?.balancePayment === "true";
         const purchaseIdFromMeta = pi.metadata?.purchaseId;
 
+        // ── Balance payment on existing purchase ─────────────
         if (isBalancePayment && purchaseIdFromMeta) {
           const { data: purchase } = await admin
             .from("purchases")
@@ -86,6 +87,7 @@ Deno.serve(async (req) => {
           break;
         }
 
+        // ── Resale completion ─────────────────────────────────
         if (itemType === "resale") {
           const listingId = pi.metadata?.listingId;
           const sellerId = pi.metadata?.sellerId;
@@ -154,6 +156,7 @@ Deno.serve(async (req) => {
           break;
         }
 
+        // ── Standard purchase fallback ────────────────────────
         const { data: existing } = await admin
           .from("purchases")
           .select("id")
@@ -190,6 +193,7 @@ Deno.serve(async (req) => {
 
         const { data: newPurchase } = await admin.from("purchases").insert(purchaseData as any).select("id").single();
 
+        // Save addon snapshots from metadata
         if (newPurchase && pi.metadata.addons_json) {
           try {
             const addonsData = JSON.parse(pi.metadata.addons_json);
@@ -290,6 +294,7 @@ Deno.serve(async (req) => {
 
               const { data: newPurchase } = await admin.from("purchases").insert(purchaseData as any).select("id").single();
 
+              // Save addon snapshots from metadata
               if (newPurchase && session.metadata?.addons_json) {
                 try {
                   const addonsData = JSON.parse(session.metadata.addons_json);
@@ -309,6 +314,7 @@ Deno.serve(async (req) => {
                 }
               }
 
+              // Complete reservation if provided
               if (session.metadata?.reservation_id) {
                 await admin.rpc("complete_reservation", {
                   _reservation_id: session.metadata.reservation_id,
@@ -316,6 +322,7 @@ Deno.serve(async (req) => {
                 });
               }
 
+              // Consume checkout token if provided
               if (session.metadata?.checkout_token) {
                 await admin.rpc("consume_checkout_token", {
                   _token: session.metadata.checkout_token,
