@@ -3,7 +3,7 @@ import { Users, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
-interface QueueWaitingRoomProps {
+export interface QueueWaitingRoomProps {
   position: number;
   totalWaiting: number;
   isWaiting: boolean;
